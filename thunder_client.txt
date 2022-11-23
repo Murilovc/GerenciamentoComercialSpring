@@ -1,0 +1,5 @@
+GET http://localhost:9000/atendimento/
+GET http://localhost:9000/atendimento/8
+GET http://localhost:9000/atendimento/busca/maria
+POST http://localhost:9000/atendimento/
+PUT http://localhost:9000/atendimento/status/6
