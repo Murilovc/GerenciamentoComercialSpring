@@ -9,9 +9,9 @@ import com.mvc.comercialplus.model.Cliente;
 
 public interface ClienteRepository extends JpaRepository<Cliente, Long>{
 	
-	@Query(
-		"SELECT c FROM Cliente c WHERE c.nome LIKE %?1% " +
-		"OR c.email LIKE %?1%"
-	)
-	List<Cliente> findByTermo(String termoBusca);
+//	@Query(
+//		"SELECT c FROM Cliente c WHERE c.nome LIKE %?1% " +
+//		"OR c.email LIKE %?1%"
+//	)
+//	List<Cliente> findByTermo(String termoBusca);
 }

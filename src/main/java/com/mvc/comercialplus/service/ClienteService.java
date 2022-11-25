@@ -26,9 +26,9 @@ public class ClienteService implements BdService<Cliente>{
 		return repo.findById(id).orElse(null);
 	}
 
-	public List<Cliente> getByTermo(String termoBusca) {
-		return repo.findByTermo(termoBusca);
-	}
+//	public List<Cliente> getByTermo(String termoBusca) {
+//		return repo.findByTermo(termoBusca);
+//	}
 
 	@Override
 	public Cliente save(Cliente objeto) {
