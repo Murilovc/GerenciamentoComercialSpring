@@ -25,6 +25,9 @@ public class Produto implements Serializable {
 	@Column(nullable=false)
 	private BigDecimal preco;
 	
+	@Column(nullable=true)
+	private BigDecimal desconto;
+	
 	@Column(name="codigo_barras", nullable=false)
 	private String codigoBarras;
 

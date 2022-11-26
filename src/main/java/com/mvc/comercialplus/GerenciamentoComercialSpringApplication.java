@@ -4,15 +4,25 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
+import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -55,13 +65,7 @@ public class GerenciamentoComercialSpringApplication {
 		
 		private JTextArea areaLembrete;
 		
-		private JButton botaoVerTurma;
-		private JButton botaoNovaTurma;
-		private JButton botaoEditarTurma;
-		private JButton botaoApagarTurma;
-		private JButton botaoMenuAtividades;
-		private JButton botaoMenuAlunos;
-		private JButton botaoMenuFrequencias;
+		private JButton btPagamento;
 		
 		private JTable tabela;
 		
@@ -84,6 +88,9 @@ public class GerenciamentoComercialSpringApplication {
 			 * */
 			this.setVisible(true);
 			this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+			this.setPreferredSize(new Dimension(1280,736));
+			this.setExtendedState(MAXIMIZED_BOTH);
+			this.pack();
 			
 			this.adicionarComponentes();
 			
@@ -93,78 +100,73 @@ public class GerenciamentoComercialSpringApplication {
 		
 		
 		private void adicionarComponentes() {
+
+
+			/*LATERAL ESQUERDA DA JANELA*/
+			byte[] imagem = null;
+			try {
+				imagem = Files.readAllBytes(Paths.get("teste.gif"));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			
-			/*
-			 * Agora criando e adicionando componentes da própria classe
-			 * */
-			botaoVerTurma = new JButton(new AcaoVerTurma());
-			
-			botaoNovaTurma = new JButton(new AcaoNovaTurma());
-			
-			botaoEditarTurma = new JButton(new AcaoEditarTurma());
-			
-			botaoApagarTurma = new JButton(new AcaoApagarTurma());
-			
-			JPanel painelLateralEsquerdo = new JPanel(new FlowLayout());
-			
-			painelLateralEsquerdo.add(botaoVerTurma);
-			painelLateralEsquerdo.add(botaoNovaTurma);
-			painelLateralEsquerdo.add(botaoEditarTurma);
-			painelLateralEsquerdo.add(botaoApagarTurma);
+			JLabel lbCategoria = new JLabel(new ImageIcon(imagem));
+			//labelCategoria.setBounds(new Rectangle(new Dimension(220,298)));
+			JLabel lbCodBarras = new JLabel("Código de barras do produto atual");
+			JLabel lbDesconto = new JLabel("Desconto em R$");
 			
 			
-			botaoMenuAtividades = new JButton(new AcaoAbrirMenuAtividades());
-			
-			botaoMenuAlunos = new JButton(new AcaoAbrirMenuAlunos());
-			
-			botaoMenuFrequencias = new JButton(new AcaoAbrirMenuFrequencias());
+			JPanel pLeteralEsq = new JPanel(new FlowLayout());
+			pLeteralEsq.setPreferredSize(new Dimension(200,700));
 			
 			
-			JPanel painelLateralDireito = new JPanel();
+			pLeteralEsq.add(lbCategoria);
+			pLeteralEsq.add(lbCodBarras);
+			pLeteralEsq.add(lbDesconto);
 			
-			painelLateralDireito.add(botaoMenuAtividades);
-			painelLateralDireito.add(botaoMenuAlunos);
-			painelLateralDireito.add(botaoMenuFrequencias);
 			
-			desativarBotoes();
+			
+
+			
+			/*CENTRO DA JANELA*/
 			
 			List<Cliente> clientes = repo.findAll();
 			Class<?>[] classes = {Long.class, String.class, String.class, String.class, String.class};
 			
-			Visualizacao<Cliente> vi = new Visualizacao<Cliente>(
+			Visualizacao<Cliente> visualizacao = new Visualizacao<Cliente>(
 					clientes,
 					new String[] {"id","email","endereco","telefone","cpf"},
 					classes,
 					clientes.size(),
 					5);
 			
-			jcp = new JScrollPane(vi.getTable());
+			tabela = visualizacao.getTable();
+			tabela.addMouseListener(new HabilitarEdicaoExclusao());
+			jcp = new JScrollPane(tabela);
 			
-			
-			
-			/*Quero pegar o Id (está na coluna 0) da linha selecionada*/
-
+			btPagamento = new JButton(new AcaoVerTurma());
 			
 			areaLembrete = new JTextArea("Lembrete sobre a turma selecionada...");
 			areaLembrete.setPreferredSize(new Dimension(800, 60));
 			areaLembrete.setFont(new Font("Arial", Font.BOLD+Font.ITALIC, 20));
 
-			this.add(painelLateralDireito, BorderLayout.EAST);
-			this.add(painelLateralEsquerdo, BorderLayout.WEST);
+			
+			/*ADICAO DOS COMPONENTES NA JANELA*/
+			this.add(pLeteralEsq, BorderLayout.WEST);
 			this.add(jcp, BorderLayout.CENTER);
 			this.add(areaLembrete, BorderLayout.SOUTH);
+			
+			
+			desativarBotoes();
 		}
 		
 		private void desativarBotoes() {
-			botaoVerTurma.setEnabled(false);
-			botaoEditarTurma.setEnabled(false);
-			botaoApagarTurma.setEnabled(false);
+			btPagamento.setEnabled(false);
 		}
 		
 		private void ativarBotoes() {
-			botaoVerTurma.setEnabled(true);
-			botaoEditarTurma.setEnabled(true);
-			botaoApagarTurma.setEnabled(true);
+			btPagamento.setEnabled(true);
 		}
 		
 		protected class HabilitarEdicaoExclusao extends MouseAdapter{
@@ -174,7 +176,7 @@ public class GerenciamentoComercialSpringApplication {
 								
 					/*Quero pegar o Id (está na coluna 0) da linha selecionada*/				
 					long idSelecionado = (long)tabela.getValueAt(tabela.getSelectedRow(), 0);
-					
+					System.out.println(tabela.getSelectedRow());
 					ativarBotoes();
 				
 				}
