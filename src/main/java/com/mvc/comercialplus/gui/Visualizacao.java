@@ -145,6 +145,12 @@ public class Visualizacao<T> extends JTable{
 				
 			}
 			
+			@Override
+			public String getColumnName(int indiceColuna) {
+				return nomeColunas[indiceColuna];
+				
+			}
+			
 		};
 		columnModel = new ViewColumnModel();
 
@@ -152,11 +158,6 @@ public class Visualizacao<T> extends JTable{
 		tabela.setColumnModel(columnModel);
 		tabela.setModel(tableModel);
 		
-	}
-	
-	
-	public JTable getTable() {
-		return tabela;
 	}
 	
 	protected class ViewColumnModel extends DefaultTableColumnModel {
@@ -181,5 +182,12 @@ public class Visualizacao<T> extends JTable{
 		        addColumn(coluna);
 		    }
 		}
-	} 
+	}
+	
+	
+	public JTable getTable() {
+		return tabela;
+	}
+	
+
 }
