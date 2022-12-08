@@ -24,7 +24,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
@@ -41,7 +40,7 @@ import com.mvc.comercialplus.service.ProdutoService;
 @SpringBootApplication
 public class GerenciamentoComercialSpringApplication {
 
-	ProdutoService produtoService;
+	private ProdutoService produtoService;
 	
 	@Autowired
 	public GerenciamentoComercialSpringApplication(ProdutoService repo) {
@@ -65,7 +64,7 @@ public class GerenciamentoComercialSpringApplication {
 		
 		private JScrollPane jcp;
 		
-		public ProdutoService service;
+		private ProdutoService service;
 		
 		
 		

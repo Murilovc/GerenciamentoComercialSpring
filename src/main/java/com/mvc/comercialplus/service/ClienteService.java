@@ -3,10 +3,12 @@ package com.mvc.comercialplus.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.mvc.comercialplus.model.Cliente;
 import com.mvc.comercialplus.repository.ClienteRepository;
 
+@Service
 public class ClienteService implements BdService<Cliente>{
 
 	ClienteRepository repo;
