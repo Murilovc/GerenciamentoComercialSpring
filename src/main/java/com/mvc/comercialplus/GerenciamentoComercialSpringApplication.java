@@ -38,6 +38,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.mvc.comercialplus.gui.Visualizacao;
 import com.mvc.comercialplus.gui.WrapLayout;
+import com.mvc.comercialplus.model.Categoria;
 import com.mvc.comercialplus.model.Produto;
 import com.mvc.comercialplus.service.ProdutoService;
 
@@ -72,6 +73,16 @@ public class GerenciamentoComercialSpringApplication {
 		
 		private Visualizacao<Produto> visualizacao;
 		
+		private JTextField campoQuantidade;
+		
+		private Produto ultimoProdutoAdicionado;
+		
+		private JPanel pLeteralEsq;
+		
+		private ImageIcon imagem;
+		
+		private JLabel lbCategoria;
+		
 		
 		public MenuPrincipal(ProdutoService repo) {
 			
@@ -94,29 +105,39 @@ public class GerenciamentoComercialSpringApplication {
 
 		}
 		
+		private void carregarImagemCategoria(int largura, int altura) {
+			
+			byte[] imagemBytes = null;
+			try {
+				if(ultimoProdutoAdicionado != null) {
+					Categoria categoria = ultimoProdutoAdicionado.getCategoria();
+					imagemBytes = Files.readAllBytes(Paths.get(categoria.getArquivoCorrespondente()));
+				} else {
+					imagemBytes = Files.readAllBytes(Paths.get("ovos.png"));
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			var icone = new ImageIcon(imagemBytes);
+			var imagemOriginal = icone.getImage();
+			icone.setImage(imagemOriginal.getScaledInstance(largura, altura, Image.SCALE_DEFAULT));
+			
+			imagem = icone;
+		}
 		
 		
 		private void adicionarComponentes() {
 
-
 			/*LATERAL ESQUERDA DA JANELA*/
-			byte[] imagem = null;
-			try {
-				imagem = Files.readAllBytes(Paths.get("teste.gif"));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			var iconeChorro = new ImageIcon(imagem);
-			var chorroOriginal = iconeChorro.getImage();
-			iconeChorro.setImage(chorroOriginal.getScaledInstance(70, 100, Image.SCALE_DEFAULT));
+			carregarImagemCategoria(120, 175);
 			
-			var lbCategoria = new JLabel(iconeChorro);
+			lbCategoria = new JLabel(imagem);
 			//labelCategoria.setBounds(new Rectangle(new Dimension(220,298)));
 			var lbCodBarras = new JLabel("Código de barras do produto atual");
 			var lbDesconto = new JLabel("Desconto em R$");
 			
 			
-			JPanel pLeteralEsq = new JPanel(new FlowLayout());
+			pLeteralEsq = new JPanel(new FlowLayout());
 			pLeteralEsq.setPreferredSize(new Dimension(200,700));
 			
 			
@@ -135,7 +156,7 @@ public class GerenciamentoComercialSpringApplication {
 			//campoNomeProduto.addKeyListener(new EscutadorTeclado());
 			var lbQuantidade = new JLabel("X");
 			lbQuantidade.setPreferredSize(new Dimension(15,50));
-			var campoQuantidade = new JTextField("1");
+			campoQuantidade = new JTextField("1");
 			campoQuantidade.setFont(getFont().deriveFont(32f));
 			campoQuantidade.setEditable(false);
 			campoQuantidade.setFocusable(false);
@@ -272,11 +293,21 @@ public class GerenciamentoComercialSpringApplication {
 				if(contador == 13) {
 					var codBarras = new String(buffer);
 					
-					if(service.validarEAN13(codBarras)) {
+					if(service.validarEAN13(codBarras) == true) {
 						Produto p = service.getByCodigoBarras(codBarras);
-						System.out.println(p.getNome());
+						
+						int quantidade = 1;
+						
 						visualizacao.adicionarElemento(p);
-						//adicionar esse produto na lista
+						ultimoProdutoAdicionado = p;
+						carregarImagemCategoria(120,175);
+						lbCategoria.setIcon(imagem);
+						for(Produto produto : visualizacao.listaTipo) {
+							if(p.equals(produto)) {
+								quantidade++;
+							}
+						}
+						campoQuantidade.setText(String.valueOf(quantidade));
 					} else {
 						
 						var dialogo = new JDialog(MenuPrincipal.this);
