@@ -2,9 +2,12 @@ package com.mvc.comercialplus.model;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -19,8 +22,9 @@ public class Produto implements Serializable {
 	@Column(nullable=false) 
 	private String nome;
 	
-	@Column(nullable=false)
-	private String categoria;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable=true)
+	private Categoria categoria;
 	
 	@Column(nullable=false)
 	private BigDecimal preco;
@@ -41,7 +45,7 @@ public class Produto implements Serializable {
 		return nome;
 	}
 
-	public String getCategoria() {
+	public Categoria getCategoria() {
 		return categoria;
 	}
 
@@ -61,7 +65,7 @@ public class Produto implements Serializable {
 		this.nome = nome;
 	}
 
-	public void setCategoria(String categoria) {
+	public void setCategoria(Categoria categoria) {
 		this.categoria = categoria;
 	}
 
@@ -72,5 +76,26 @@ public class Produto implements Serializable {
 	public void setCodigoBarras(String codigoBarras) {
 		this.codigoBarras = codigoBarras;
 	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(categoria, codigoBarras, desconto, id, nome, preco);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Produto other = (Produto) obj;
+		return categoria == other.categoria && Objects.equals(codigoBarras, other.codigoBarras)
+				&& Objects.equals(desconto, other.desconto) && Objects.equals(id, other.id)
+				&& Objects.equals(nome, other.nome) && Objects.equals(preco, other.preco);
+	}
+	
+	
 	
 }
