@@ -1,5 +1,6 @@
 package com.mvc.comercialplus.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +20,8 @@ public class ProdutoService implements BdService<Produto>{
 	}
 	
 	@Override
-	public List<Produto> getAll() {
-		return repo.findAll();
+	public ArrayList<Produto> getAll() {
+		return (ArrayList<Produto>) repo.findAll();
 	}
 
 	@Override

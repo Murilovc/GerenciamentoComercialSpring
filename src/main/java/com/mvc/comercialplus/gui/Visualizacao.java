@@ -29,14 +29,14 @@ public class Visualizacao<T> extends JTable{
 	String[] nomeColunas;
 	Class<?>[] classesCampos;
 	
-	final int numLinhas, numColunas;
+	int numLinhas, numColunas;
 	
-	public Visualizacao(List<T> listaTipo, String[] nomeColunas, Class<?>[] classesCampos, int linhas, int colunas) {
+	public Visualizacao(List<T> listaTipo, String[] nomeColunas, Class<?>[] classesCampos, int colunas) {
 		
 		this.tabela = new JTable();
 		
 		this.listaTipo = listaTipo;
-		this.numLinhas = linhas;
+		this.numLinhas = listaTipo.size();
 		this.numColunas = colunas;
 		this.nomeColunas = nomeColunas;
 		this.classesCampos = classesCampos;
@@ -103,7 +103,7 @@ public class Visualizacao<T> extends JTable{
 
 			@Override
 			public int getRowCount() {
-				return linhas;
+				return numLinhas;
 			}
 
 			@Override
@@ -158,6 +158,13 @@ public class Visualizacao<T> extends JTable{
 		tabela.setColumnModel(columnModel);
 		tabela.setModel(tableModel);
 		
+	}
+	
+	public void adicionarElemento(T t) {
+		listaTipo.add(t);
+		numLinhas++;
+		tableModel.fireTableDataChanged();
+		tabela.repaint();
 	}
 	
 	protected class ViewColumnModel extends DefaultTableColumnModel {

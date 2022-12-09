@@ -1,10 +1,12 @@
 package com.mvc.comercialplus;
 
 import java.awt.BorderLayout;
+import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Image;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -19,6 +21,7 @@ import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -26,6 +29,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -66,6 +70,7 @@ public class GerenciamentoComercialSpringApplication {
 		
 		private ProdutoService service;
 		
+		private Visualizacao<Produto> visualizacao;
 		
 		
 		public MenuPrincipal(ProdutoService repo) {
@@ -81,7 +86,7 @@ public class GerenciamentoComercialSpringApplication {
 			 * */
 			this.setVisible(true);
 			this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-			this.setPreferredSize(new Dimension(1280,736));
+			this.setSize(new Dimension(1280,736));
 			this.setExtendedState(MAXIMIZED_BOTH);
 			//this.pack();
 			
@@ -178,11 +183,10 @@ public class GerenciamentoComercialSpringApplication {
 			Class<?>[] classes = {Long.class, String.class, String.class,
 					String.class, BigDecimal.class, BigDecimal.class};
 			
-			Visualizacao<Produto> visualizacao = new Visualizacao<Produto>(
+			visualizacao = new Visualizacao<Produto>(
 					clientes,
 					new String[] {"id","categoria","codigoBarras","nome","preco", "desconto"},
 					classes,
-					clientes.size(),
 					6);
 			
 			tabela = visualizacao.getTable();
@@ -253,9 +257,7 @@ public class GerenciamentoComercialSpringApplication {
 			}
 
 		}
-		
-		
-		
+				
 		protected class EscutadorTeclado extends KeyAdapter {
 			
 			//buffer de caracteres com tamanho maximo suficiente
@@ -269,9 +271,34 @@ public class GerenciamentoComercialSpringApplication {
 				
 				if(contador == 13) {
 					var codBarras = new String(buffer);
+					
 					if(service.validarEAN13(codBarras)) {
 						Produto p = service.getByCodigoBarras(codBarras);
+						System.out.println(p.getNome());
+						visualizacao.adicionarElemento(p);
 						//adicionar esse produto na lista
+					} else {
+						
+						var dialogo = new JDialog(MenuPrincipal.this);
+						dialogo.setSize(new Dimension(250,150));
+						dialogo.setTitle("Alerta");
+						dialogo.setLayout(new BorderLayout());
+						dialogo.setLocationRelativeTo(MenuPrincipal.this);
+						dialogo.setModalityType(ModalityType.APPLICATION_MODAL);
+						dialogo.setResizable(false);
+						
+						var lbMensagem = new JLabel("Código de barras inválido.");
+						var btFechar = new JButton("Fechar");
+						btFechar.addActionListener((evento) -> dialogo.dispose());
+						
+						var painel = new JPanel(new BorderLayout());
+						painel.add(btFechar, BorderLayout.SOUTH);
+						painel.add(lbMensagem, BorderLayout.CENTER);
+						
+						dialogo.add(painel, BorderLayout.CENTER);
+						
+						dialogo.setVisible(true);
+						dialogo.pack();
 					}
 					contador = 0;
 				}
