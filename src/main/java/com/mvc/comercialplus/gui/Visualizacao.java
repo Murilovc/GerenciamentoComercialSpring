@@ -25,7 +25,7 @@ public class Visualizacao<T> extends JTable{
 	DefaultTableColumnModel columnModel;
 	AbstractTableModel tableModel;
 	
-	List<T> listaTipo;
+	public List<T> listaTipo;
 	String[] nomeColunas;
 	Class<?>[] classesCampos;
 	
@@ -164,7 +164,6 @@ public class Visualizacao<T> extends JTable{
 		listaTipo.add(t);
 		numLinhas++;
 		tableModel.fireTableDataChanged();
-		tabela.repaint();
 	}
 	
 	protected class ViewColumnModel extends DefaultTableColumnModel {
