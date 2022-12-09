@@ -20,8 +20,8 @@ public class ProdutoService implements BdService<Produto>{
 	}
 	
 	@Override
-	public ArrayList<Produto> getAll() {
-		return (ArrayList<Produto>) repo.findAll();
+	public List<Produto> getAll() {
+		return repo.findAll();
 	}
 
 	@Override
