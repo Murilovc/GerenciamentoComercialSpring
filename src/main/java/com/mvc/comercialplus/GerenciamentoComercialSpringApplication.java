@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -74,6 +75,12 @@ public class GerenciamentoComercialSpringApplication {
 		private Visualizacao<Produto> visualizacao;
 		
 		private JTextField campoQuantidade;
+		private JTextField campoPreco;
+		private JTextField campoNomeProduto;
+		private JTextField campoTotal;
+		
+		private JLabel lbCodBarras;
+		private JLabel lbDesconto;
 		
 		private Produto ultimoProdutoAdicionado;
 		
@@ -133,8 +140,8 @@ public class GerenciamentoComercialSpringApplication {
 			
 			lbCategoria = new JLabel(imagem);
 			//labelCategoria.setBounds(new Rectangle(new Dimension(220,298)));
-			var lbCodBarras = new JLabel("Código de barras do produto atual");
-			var lbDesconto = new JLabel("Desconto em R$");
+			lbCodBarras = new JLabel("Nenhum produto escaneado");
+			lbDesconto = new JLabel("Desconto: ");
 			
 			
 			pLeteralEsq = new JPanel(new FlowLayout());
@@ -148,7 +155,7 @@ public class GerenciamentoComercialSpringApplication {
 			
 			/*PARTE SUPERIOR DA JANELA*/
 		
-			var campoNomeProduto = new JTextField("Produto Z");
+			campoNomeProduto = new JTextField("Nenhum produto adicionado na lista");
 			campoNomeProduto.setEditable(false);
 			campoNomeProduto.setFont(getFont().deriveFont(36f));
 			campoNomeProduto.setPreferredSize(new Dimension(650,50));
@@ -156,7 +163,7 @@ public class GerenciamentoComercialSpringApplication {
 			//campoNomeProduto.addKeyListener(new EscutadorTeclado());
 			var lbQuantidade = new JLabel("X");
 			lbQuantidade.setPreferredSize(new Dimension(15,50));
-			campoQuantidade = new JTextField("1");
+			campoQuantidade = new JTextField("0");
 			campoQuantidade.setFont(getFont().deriveFont(32f));
 			campoQuantidade.setEditable(false);
 			campoQuantidade.setFocusable(false);
@@ -177,10 +184,10 @@ public class GerenciamentoComercialSpringApplication {
 			var lbPreco = new JLabel("PREÇO:");
 			lbPreco.setFont(getFont().deriveFont(Font.BOLD).deriveFont(36f));
 			//lbPreco.setPreferredSize(new Dimension(100,50));
-			var campoPreco = new JTextField("R$ 2,90");
+			campoPreco = new JTextField("R$ 0,00");
 			campoPreco.setEditable(false);
 			campoPreco.setFont(getFont().deriveFont(36f));
-			campoPreco.setPreferredSize(new Dimension(200,50));
+			campoPreco.setPreferredSize(new Dimension(220,50));
 			campoPreco.setFocusable(false);
 			
 			var pSegundaLinha = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -200,7 +207,7 @@ public class GerenciamentoComercialSpringApplication {
 			
 			/*CENTRO DA JANELA*/
 			
-			List<Produto> clientes = service.getAll();
+			List<Produto> clientes = new ArrayList<>();
 			Class<?>[] classes = {Long.class, String.class, String.class,
 					String.class, BigDecimal.class, BigDecimal.class};
 			
@@ -226,7 +233,7 @@ public class GerenciamentoComercialSpringApplication {
 			
 			var lbTotal = new JLabel("TOTAL:");
 			lbTotal.setFont(getFont().deriveFont(Font.BOLD).deriveFont(36f));
-			var campoTotal = new JTextField("R$ 6,00");
+			campoTotal = new JTextField("R$ 0,00");
 			campoTotal.setFont(getFont().deriveFont(Font.BOLD).deriveFont(36f));
 			campoTotal.setEditable(false);
 			campoTotal.setFocusable(false);
@@ -297,17 +304,26 @@ public class GerenciamentoComercialSpringApplication {
 						Produto p = service.getByCodigoBarras(codBarras);
 						
 						int quantidade = 0;
+						BigDecimal valorUnidades = new BigDecimal(0);
+						BigDecimal valorTotal = new BigDecimal(0);
 						
 						visualizacao.adicionarElemento(p);
 						ultimoProdutoAdicionado = p;
 						carregarImagemCategoria(120,175);
 						lbCategoria.setIcon(imagem);
 						for(Produto produto : visualizacao.listaTipo) {
+							valorTotal = produto.getPreco().add(valorTotal);
 							if(p.equals(produto)) {
+								valorUnidades = produto.getPreco().add(valorUnidades);
 								quantidade++;
 							}
 						}
 						campoQuantidade.setText(String.valueOf(quantidade));
+						campoPreco.setText("R$ "+valorUnidades.toString().replace('.', ','));
+						campoNomeProduto.setText(p.getNome());
+						campoTotal.setText("R$ "+valorTotal.toString().replace('.', ','));
+						lbCodBarras.setText("<html>Código de barras escaneado:<br>"+p.getCodigoBarras());
+						lbDesconto.setText("Desconto: Nenhum");
 					} else {
 						
 						var dialogo = new JDialog(MenuPrincipal.this);
