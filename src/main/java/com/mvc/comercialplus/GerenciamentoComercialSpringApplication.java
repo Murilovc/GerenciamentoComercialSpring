@@ -296,7 +296,7 @@ public class GerenciamentoComercialSpringApplication {
 					if(service.validarEAN13(codBarras) == true) {
 						Produto p = service.getByCodigoBarras(codBarras);
 						
-						int quantidade = 1;
+						int quantidade = 0;
 						
 						visualizacao.adicionarElemento(p);
 						ultimoProdutoAdicionado = p;
