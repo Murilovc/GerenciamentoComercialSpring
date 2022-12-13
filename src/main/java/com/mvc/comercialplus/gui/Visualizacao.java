@@ -166,6 +166,18 @@ public class Visualizacao<T> extends JTable{
 		tableModel.fireTableDataChanged();
 	}
 	
+	public void removerElemento(T t) {
+		listaTipo.remove(t);
+		numLinhas--;
+		tableModel.fireTableDataChanged();
+	}
+	
+	public void removerElementos(List<T> listaGenerica) {
+		for(T t : listaGenerica) {
+			removerElemento(t);
+		}
+	}
+	
 	protected class ViewColumnModel extends DefaultTableColumnModel {
 		
 		public ViewColumnModel() {
