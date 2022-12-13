@@ -6,18 +6,16 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Image;
-import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
@@ -30,7 +28,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -84,7 +81,7 @@ public class GerenciamentoComercialSpringApplication {
 		
 		private Produto ultimoProdutoAdicionado;
 		
-		private JPanel pLeteralEsq;
+		private JPanel pLateralEsq;
 		
 		private ImageIcon imagem;
 		
@@ -139,18 +136,35 @@ public class GerenciamentoComercialSpringApplication {
 			carregarImagemCategoria(120, 175);
 			
 			lbCategoria = new JLabel(imagem);
+			var pImagem = new JPanel();
+			pImagem.setSize(new Dimension(130,185));
+			pImagem.add(lbCategoria);
 			//labelCategoria.setBounds(new Rectangle(new Dimension(220,298)));
 			lbCodBarras = new JLabel("Nenhum produto escaneado");
 			lbDesconto = new JLabel("Desconto: ");
 			
+			/*TODO Ver se faz sentido isso ser um botao, ja que o proprio botao toma o o foco TODO
+			 * Ideal seria um JLabel com uma imagem confirmando o foco ou a falta dele. E em
+			 * outro lugar um botao exclusivamente parer pedir foco para a janela escutar o teclado*/
+			var botaoLeituraCodBarras = new JButton("icon positivo aqui");
+			botaoLeituraCodBarras.addActionListener((e) -> {
+				this.requestFocus();
+				if(this.isFocusOwner()) {
+					botaoLeituraCodBarras.setText("Lendo");
+				}
+			});
 			
-			pLeteralEsq = new JPanel(new FlowLayout());
-			pLeteralEsq.setPreferredSize(new Dimension(200,700));
+			pLateralEsq = new JPanel(new BorderLayout());
+			pLateralEsq.setPreferredSize(new Dimension(200,700));
 			
 			
-			pLeteralEsq.add(lbCategoria);
-			pLeteralEsq.add(lbCodBarras);
-			pLeteralEsq.add(lbDesconto);
+			
+			pLateralEsq.add(pImagem, BorderLayout.NORTH);
+			var pInfo = new JPanel(new FlowLayout(FlowLayout.LEFT));
+			pInfo.add(lbCodBarras);
+			pInfo.add(lbDesconto);
+			pLateralEsq.add(pInfo, BorderLayout.CENTER);
+			pLateralEsq.add(botaoLeituraCodBarras, BorderLayout.SOUTH);
 			
 			
 			/*PARTE SUPERIOR DA JANELA*/
@@ -170,17 +184,6 @@ public class GerenciamentoComercialSpringApplication {
 			var lbUnidade = new JLabel("UN.");
 			lbUnidade.setPreferredSize(new Dimension(20,50));
 			
-			byte[] arquivoSeta = null;
-			try {
-				arquivoSeta = Files.readAllBytes(Paths.get("right-arrow.png"));
-			} catch (IOException e) {
-				e.getCause().getMessage();
-			}
-			var iconSeta = new ImageIcon(arquivoSeta);
-			var imgParaConverter = iconSeta.getImage();
-			iconSeta.setImage(imgParaConverter.getScaledInstance(50, 50, Image.SCALE_SMOOTH));
-			var lbImgSeta = new JLabel(iconSeta);
-			lbImgSeta.setPreferredSize(new Dimension(50,50));
 			var lbPreco = new JLabel("PREÇO:");
 			lbPreco.setFont(getFont().deriveFont(Font.BOLD).deriveFont(36f));
 			//lbPreco.setPreferredSize(new Dimension(100,50));
@@ -192,7 +195,6 @@ public class GerenciamentoComercialSpringApplication {
 			
 			var pSegundaLinha = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 			pSegundaLinha.setPreferredSize(new Dimension(700,60));
-			pSegundaLinha.add(lbImgSeta);
 			pSegundaLinha.add(lbPreco);
 			pSegundaLinha.add(campoPreco);
 			
@@ -218,7 +220,7 @@ public class GerenciamentoComercialSpringApplication {
 					6);
 			
 			tabela = visualizacao.getTable();
-			tabela.addMouseListener(new HabilitarEdicaoExclusao());
+			//tabela.addMouseListener(new HabilitarEdicaoExclusao());
 			jcp = new JScrollPane(tabela);
 			
 			var lbTituloTabela = new JLabel("Produtos adicionados:");
@@ -246,10 +248,41 @@ public class GerenciamentoComercialSpringApplication {
 			pInferior.add(lbTotal);
 			pInferior.add(campoTotal);
 			pInferior.add(btPagamento);
-
+			
+			/* LATERAL DIREITA DA JANELA */
+			
+			var botaoRemover = new JButton();
+			botaoRemover.setText("Remover");
+			botaoRemover.setPreferredSize(new Dimension(90,30));
+			
+			botaoRemover.addActionListener(e -> {
+				if(tabela.getSelectedRowCount() > 1) {
+					
+					int[] indices = tabela.getSelectedRows();
+					List<Produto> listaProdutos = new ArrayList<>();
+					
+					/* O resto da funcao assume que a ordem das linhas
+					 * no JTable eh a mesma ordem dos produtos na lista de produtos
+					 * da Visualizacao */
+					for(int i = 0; i < tabela.getSelectedRowCount(); i++) {
+						Produto p = visualizacao.listaTipo.get(indices[i]);
+						listaProdutos.add(p);
+					}
+					visualizacao.removerElementos(listaProdutos);
+					exibirDialog("Sucesso!", ModalityType.APPLICATION_MODAL, "Produtos removidos da lista");
+				} else {
+					int indice = tabela.getSelectedRow();
+					Produto p = visualizacao.listaTipo.get(indice);
+					visualizacao.removerElemento(p);
+					exibirDialog("Sucesso!", ModalityType.APPLICATION_MODAL, "Produto removido da lista");
+				}
+				
+			});
+			
+			pCentral.add(botaoRemover, BorderLayout.EAST);
 			
 			/*ADICAO DOS PAINEIS NA JANELA*/
-			this.add(pLeteralEsq, BorderLayout.WEST);
+			this.add(pLateralEsq, BorderLayout.WEST);
 			this.add(pSuperior, BorderLayout.NORTH);
 			this.add(pCentral, BorderLayout.CENTER);
 			this.add(pInferior, BorderLayout.SOUTH);
@@ -259,32 +292,30 @@ public class GerenciamentoComercialSpringApplication {
 			this.setAutoRequestFocus(true);
 			this.requestFocusInWindow();
 			
-//			desativarBotoes();
 		}
 		
-//		private void desativarBotoes() {
-//			btPagamento.setEnabled(false);
+//		protected class HabilitarEdicaoExclusao extends MouseAdapter{
+//			
+//			@Override
+//			public void mousePressed(MouseEvent e) {
+//				if (tabela.getSelectedRow() >= 0) {
+//					
+//					int numLinhas = tabela.getSelectedRows().length;
+//					
+//					int[] arrayDeIdSelecionado = new int[numLinhas];
+//					
+//					/*Quero pegar o Id (está na coluna 0) da linha selecionada*/
+//					for(int i = 0; i < numLinhas; i++) {
+//						long u = (long)tabela.getValueAt(i, 0);
+//					}
+//					long idSelecionado = (long)tabela.getValueAt(tabela.getSelectedRow(), 0);
+//					//ativarBotoes();
+//				
+//				}
+//
+//			}
+//
 //		}
-//		
-//		private void ativarBotoes() {
-//			btPagamento.setEnabled(true);
-//		}
-		
-		protected class HabilitarEdicaoExclusao extends MouseAdapter{
-			
-			public void mousePressed(MouseEvent e) {
-				if (tabela.getSelectedRow() >= 0) {
-								
-					/*Quero pegar o Id (está na coluna 0) da linha selecionada*/				
-					long idSelecionado = (long)tabela.getValueAt(tabela.getSelectedRow(), 0);
-					System.out.println(tabela.getSelectedRow());
-					//ativarBotoes();
-				
-				}
-
-			}
-
-		}
 				
 		protected class EscutadorTeclado extends KeyAdapter {
 			
@@ -301,55 +332,68 @@ public class GerenciamentoComercialSpringApplication {
 					var codBarras = new String(buffer);
 					
 					if(service.validarEAN13(codBarras) == true) {
-						Produto p = service.getByCodigoBarras(codBarras);
+						Optional<Produto> op = Optional.ofNullable(service.getByCodigoBarras(codBarras));
 						
-						int quantidade = 0;
-						BigDecimal valorUnidades = new BigDecimal(0);
-						BigDecimal valorTotal = new BigDecimal(0);
-						
-						visualizacao.adicionarElemento(p);
-						ultimoProdutoAdicionado = p;
-						carregarImagemCategoria(120,175);
-						lbCategoria.setIcon(imagem);
-						for(Produto produto : visualizacao.listaTipo) {
-							valorTotal = produto.getPreco().add(valorTotal);
-							if(p.equals(produto)) {
-								valorUnidades = produto.getPreco().add(valorUnidades);
-								quantidade++;
+						if(op.isPresent()) {
+							int quantidade = 0;
+							BigDecimal valorUnidades = new BigDecimal(0);
+							BigDecimal valorTotal = new BigDecimal(0);
+							
+							
+							Produto p = op.get();
+							visualizacao.adicionarElemento(p);
+							ultimoProdutoAdicionado = p;
+							carregarImagemCategoria(120,175);
+							lbCategoria.setIcon(imagem);
+							for(Produto produto : visualizacao.listaTipo) {
+								valorTotal = produto.getPreco().add(valorTotal);
+								if(p.equals(produto)) {
+									valorUnidades = produto.getPreco().add(valorUnidades);
+									quantidade++;
+								}
 							}
+							campoQuantidade.setText(String.valueOf(quantidade));
+							campoPreco.setText("R$ "+valorUnidades.toString().replace('.', ','));
+							campoNomeProduto.setText(p.getNome());
+							campoTotal.setText("R$ "+valorTotal.toString().replace('.', ','));
+							lbCodBarras.setText("<html>Código de barras escaneado:<br>"+p.getCodigoBarras());
+							lbDesconto.setText("<html>Desconto:<br>Nenhum");
 						}
-						campoQuantidade.setText(String.valueOf(quantidade));
-						campoPreco.setText("R$ "+valorUnidades.toString().replace('.', ','));
-						campoNomeProduto.setText(p.getNome());
-						campoTotal.setText("R$ "+valorTotal.toString().replace('.', ','));
-						lbCodBarras.setText("<html>Código de barras escaneado:<br>"+p.getCodigoBarras());
-						lbDesconto.setText("Desconto: Nenhum");
+
 					} else {
 						
-						var dialogo = new JDialog(MenuPrincipal.this);
-						dialogo.setSize(new Dimension(250,150));
-						dialogo.setTitle("Alerta");
-						dialogo.setLayout(new BorderLayout());
-						dialogo.setLocationRelativeTo(MenuPrincipal.this);
-						dialogo.setModalityType(ModalityType.APPLICATION_MODAL);
-						dialogo.setResizable(false);
-						
-						var lbMensagem = new JLabel("Código de barras inválido.");
-						var btFechar = new JButton("Fechar");
-						btFechar.addActionListener((evento) -> dialogo.dispose());
-						
-						var painel = new JPanel(new BorderLayout());
-						painel.add(btFechar, BorderLayout.SOUTH);
-						painel.add(lbMensagem, BorderLayout.CENTER);
-						
-						dialogo.add(painel, BorderLayout.CENTER);
-						
-						dialogo.setVisible(true);
-						dialogo.pack();
+						exibirDialog("Alerta", ModalityType.APPLICATION_MODAL, "Código de barras inválido");
+
 					}
 					contador = 0;
 				}
 			}
+		}
+		
+		private void exibirDialog(String titulo, ModalityType tipoModal, String mensagem) {
+			var dialogo = new JDialog(MenuPrincipal.this);
+			dialogo.setSize(new Dimension(250,150));
+			dialogo.setTitle(titulo);
+			dialogo.setLayout(new BorderLayout());
+			dialogo.setLocationRelativeTo(MenuPrincipal.this);
+			dialogo.setModalityType(tipoModal);
+			dialogo.setResizable(false);
+			
+			var lbMensagem = new JLabel(mensagem);
+			var btFechar = new JButton("Fechar");
+			btFechar.addActionListener((evento) -> {
+				dialogo.dispose();
+				MenuPrincipal.this.requestFocusInWindow();
+			});
+			//KeyboardFocusManager.clearGlobalFocusOwner();
+			var painel = new JPanel(new BorderLayout());
+			painel.add(btFechar, BorderLayout.SOUTH);
+			painel.add(lbMensagem, BorderLayout.CENTER);
+			
+			dialogo.add(painel, BorderLayout.CENTER);
+			
+			dialogo.setVisible(true);
+			dialogo.pack();
 		}
 		
 		protected class AcaoPagamento extends AbstractAction {
