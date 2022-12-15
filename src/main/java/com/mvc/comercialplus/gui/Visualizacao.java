@@ -178,6 +178,10 @@ public class Visualizacao<T> extends JTable{
 		}
 	}
 	
+	public T pegarUltimoElemento() {
+		return listaTipo.get(listaTipo.size()-1);
+	}
+	
 	protected class ViewColumnModel extends DefaultTableColumnModel {
 		
 		public ViewColumnModel() {
