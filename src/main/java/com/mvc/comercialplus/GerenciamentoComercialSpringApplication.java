@@ -218,7 +218,7 @@ public class GerenciamentoComercialSpringApplication {
 			
 			visualizacao = new Visualizacao<Produto>(
 					clientes,
-					new String[] {"id","categoria","codigoBarras","nome","preco", "desconto"},
+					new String[] {"ID","CATEGORIA","CÓDIGO DE BARRAS","NOME","PREÇO", "DESCONTO"},
 					classes,
 					6);
 			

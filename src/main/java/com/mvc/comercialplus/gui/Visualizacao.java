@@ -17,6 +17,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
 
+import com.mvc.comercialplus.model.Produto;
+
 public class Visualizacao<T> extends JTable{
 	
 	JTable tabela;
@@ -118,22 +120,45 @@ public class Visualizacao<T> extends JTable{
 				
 				T tipo = listaTipo.get(indiceLinha);
 				
-				/* XXX Usando reflexao para descobrir o campo correspondente ao
-				 * nome da coluna XXX */
-				try {
-					Field f = tipo.getClass().getDeclaredField(nomeColunas[indiceColuna]);
-					f.setAccessible(true);
-					dado = f.get(tipo);
-				} catch (NoSuchFieldException | SecurityException e) {
-					e.getCause();
-					return "Erro";
-				} catch (IllegalArgumentException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IllegalAccessException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				if(tipo instanceof Produto) {
+					Produto p = (Produto) tipo;
+					switch(indiceColuna) {
+						case 0:
+							dado = p.getId();
+							break;
+						case 1:
+							dado = p.getCategoria();
+							break;
+						case 2:
+							dado = p.getCodigoBarras();
+							break;
+						case 3:
+							dado = p.getNome();
+							break;
+						case 4:
+							dado = p.getPreco();
+							break;
+						case 5:
+							dado = p.getDesconto();
+							break;
+						default:
+							dado = "Erro";
+					}
 				}
+//				/* Usando reflexao para descobrir o campo correspondente ao
+//				 * nome da coluna */
+//				try {
+//					Field f = tipo.getClass().getDeclaredField(nomeColunas[indiceColuna]);
+//					f.setAccessible(true);
+//					dado = f.get(tipo);
+//				} catch (NoSuchFieldException | SecurityException e) {
+//					e.getCause();
+//					return "Erro";
+//				} catch (IllegalArgumentException e) {
+//					e.printStackTrace();
+//				} catch (IllegalAccessException e) {
+//					e.printStackTrace();
+//				}
 				
 				return dado;
 			}

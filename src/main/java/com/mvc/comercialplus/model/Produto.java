@@ -56,6 +56,10 @@ public class Produto implements Serializable {
 	public String getCodigoBarras() {
 		return codigoBarras;
 	}
+	
+	public BigDecimal getDesconto() {
+		return this.desconto;
+	}
 
 	public void setId(Long id) {
 		this.id = id;
@@ -75,6 +79,10 @@ public class Produto implements Serializable {
 
 	public void setCodigoBarras(String codigoBarras) {
 		this.codigoBarras = codigoBarras;
+	}
+	
+	public void setDesconto(BigDecimal desconto) {
+		this.desconto = desconto;
 	}
 
 	@Override
