@@ -120,25 +120,16 @@ public class GerenciamentoComercialSpringApplication {
 		
 		private void carregarImagemCategoria(int largura, int altura) {
 			
-			byte[] imagemBytes = null;
-			try {
-				if(ultimoProdutoAdicionado != null) {
-					Categoria categoria = ultimoProdutoAdicionado.getCategoria();
-					imagemBytes = Files.readAllBytes(Paths.get(categoria.getArquivoCorrespondente()));
-				} else {
-					imagemBytes = Files.readAllBytes(Paths.get("ovos.png"));
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
+			if(ultimoProdutoAdicionado != null) {
+				Categoria categoria = ultimoProdutoAdicionado.getCategoria();
+				imagem = carregarImagem(categoria.getArquivoCorrespondente(), 120, 175);
+			} else {
+				imagem = carregarImagem("ovos.png", 120, 175);
 			}
-			var icone = new ImageIcon(imagemBytes);
-			var imagemOriginal = icone.getImage();
-			icone.setImage(imagemOriginal.getScaledInstance(largura, altura, Image.SCALE_DEFAULT));
-			
-			imagem = icone;
+
 		}
 		
-		private ImageIcon carregarRedimensionarImagem(String pathArquivo, int altura, int largura) {
+		private ImageIcon carregarImagem(String pathArquivo, int altura, int largura) {
 			byte[] imagemBytes = null;
 			
 			try {
@@ -166,7 +157,7 @@ public class GerenciamentoComercialSpringApplication {
 
 			lbLeituraCodBarras = new JLabel("Pronto para ler");
 			
-			var icone = carregarRedimensionarImagem("barcode.png", 100, 30);
+			var icone = carregarImagem("barcode.png", 100, 30);
 			lbLeituraCodBarras.setIcon(icone);
 			
 			pLateralEsq = new JPanel(new BorderLayout());
@@ -187,7 +178,6 @@ public class GerenciamentoComercialSpringApplication {
 			campoNomeProduto.setFont(getFont().deriveFont(36f));
 			campoNomeProduto.setPreferredSize(new Dimension(650,50));
 			campoNomeProduto.setFocusable(false);
-			//campoNomeProduto.addKeyListener(new EscutadorTeclado());
 			var lbQuantidade = new JLabel("X");
 			lbQuantidade.setPreferredSize(new Dimension(15,50));
 			campoQuantidade = new JTextField("0");
@@ -282,7 +272,9 @@ public class GerenciamentoComercialSpringApplication {
 						listaProdutos.add(p);
 					}
 					visualizacao.removerElementos(listaProdutos);
-					atualizarInfoCaixa(visualizacao.pegarUltimoElemento());
+					
+					var opProduto = Optional.ofNullable(visualizacao.pegarUltimoElemento());
+					opProduto.ifPresentOrElse(this::atualizarInfoCaixa, () -> atualizarInfoCaixa());
 					
 					exibirDialog("Sucesso!", ModalityType.APPLICATION_MODAL, "Produtos removidos da lista");
 				} else {
@@ -290,8 +282,10 @@ public class GerenciamentoComercialSpringApplication {
 					if(indice != -1) {
 						Produto p = visualizacao.listaTipo.get(indice);
 						visualizacao.removerElemento(p);
+						
 						var opProduto = Optional.ofNullable(visualizacao.pegarUltimoElemento());
-						opProduto.ifPresent(this::atualizarInfoCaixa);
+						opProduto.ifPresentOrElse(this::atualizarInfoCaixa, () -> atualizarInfoCaixa());
+						
 						exibirDialog("Sucesso!", ModalityType.APPLICATION_MODAL, "Produto removido da lista");
 					}
 				}
@@ -312,22 +306,6 @@ public class GerenciamentoComercialSpringApplication {
 			this.setFocusable(true);
 			this.setAutoRequestFocus(true);
 			this.requestFocusInWindow();
-			
-
-			
-			//colando da area de tranferencia usando Robot
-//	        Robot robot;
-//			try {
-//				robot = new Robot();
-//				
-//		        int teclaControle = System.getProperty("os.name").startsWith("Mac") ? KeyEvent.VK_META : KeyEvent.VK_CONTROL;
-//		        robot.keyPress(teclaControle);
-//		        robot.keyPress(KeyEvent.VK_V);
-//		        robot.keyRelease(teclaControle);
-//		        robot.keyRelease(KeyEvent.VK_V);
-//			} catch (AWTException e1) {
-//				e1.getCause().getMessage();
-//			}
 
 		}
 		
@@ -338,7 +316,7 @@ public class GerenciamentoComercialSpringApplication {
 				if (tabela.getSelectedRow() >= 0) {
 					botaoRemover.setEnabled(true);
 					lbLeituraCodBarras.setText("Leitura indisponível");
-					lbLeituraCodBarras.setIcon(carregarRedimensionarImagem("errado.png", 25, 25));
+					lbLeituraCodBarras.setIcon(carregarImagem("errado.png", 25, 25));
 					
 				}
 
@@ -404,6 +382,8 @@ public class GerenciamentoComercialSpringApplication {
 					lbCategoria.setIcon(imagem);
 					
 					atualizarInfoCaixa(p);
+				} else {
+					exibirDialog("Alerta", ModalityType.APPLICATION_MODAL, "Produto ainda não cadastrado");
 				}
 
 			} else {
@@ -412,6 +392,17 @@ public class GerenciamentoComercialSpringApplication {
 
 			}
 			
+		}
+		
+		/**
+		 * Metodo chamado quando nao existem produtos na lista
+		 * de compra do cliente.
+		 */
+		private void atualizarInfoCaixa() {
+			campoPreco.setText("R$ 0,00");
+			campoTotal.setText("R$ 0,00");
+			campoNomeProduto.setText("Nenhum produto adicionado na lista");
+			campoQuantidade.setText("0");
 		}
 		
 		private void atualizarInfoCaixa(Produto produtoEscaneado) {
@@ -450,7 +441,7 @@ public class GerenciamentoComercialSpringApplication {
 				dialogo.dispose();
 				MenuPrincipal.this.requestFocusInWindow();
 				lbLeituraCodBarras.setText("Pronto para ler");
-				lbLeituraCodBarras.setIcon(carregarRedimensionarImagem("barcode.png", 100, 30));
+				lbLeituraCodBarras.setIcon(carregarImagem("barcode.png", 100, 30));
 			});
 
 			//KeyboardFocusManager.clearGlobalFocusOwner();
