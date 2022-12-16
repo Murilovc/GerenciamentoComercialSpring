@@ -69,6 +69,7 @@ public class GerenciamentoComercialSpringApplication {
 	static class MenuPrincipal extends JFrame{
 		
 		private JButton btPagamento;
+		private JButton botaoRemover;
 		
 		private JTable tabela;
 		
@@ -137,7 +138,7 @@ public class GerenciamentoComercialSpringApplication {
 			imagem = icone;
 		}
 		
-		private ImageIcon lerERedimensionarImagem(String pathArquivo, int altura, int largura) {
+		private ImageIcon carregarRedimensionarImagem(String pathArquivo, int altura, int largura) {
 			byte[] imagemBytes = null;
 			
 			try {
@@ -160,19 +161,16 @@ public class GerenciamentoComercialSpringApplication {
 			var pImagem = new JPanel();
 			pImagem.setSize(new Dimension(130,185));
 			pImagem.add(lbCategoria);
-			//labelCategoria.setBounds(new Rectangle(new Dimension(220,298)));
 			lbCodBarras = new JLabel("Nenhum produto escaneado");
 			lbDesconto = new JLabel("Desconto: ");
 
 			lbLeituraCodBarras = new JLabel("Pronto para ler");
 			
-			var icone = lerERedimensionarImagem("barcode.png", 100, 30);
+			var icone = carregarRedimensionarImagem("barcode.png", 100, 30);
 			lbLeituraCodBarras.setIcon(icone);
 			
 			pLateralEsq = new JPanel(new BorderLayout());
 			pLateralEsq.setPreferredSize(new Dimension(200,700));
-			
-			
 			
 			pLateralEsq.add(pImagem, BorderLayout.NORTH);
 			var pInfo = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -236,7 +234,6 @@ public class GerenciamentoComercialSpringApplication {
 			
 			tabela = visualizacao.getTable();
 			tabela.addMouseListener(new EscutadorMouse());
-			//tabela.addMouseListener(new HabilitarEdicaoExclusao());
 			jcp = new JScrollPane(tabela);
 			
 			var lbTituloTabela = new JLabel("Produtos adicionados:");
@@ -267,7 +264,7 @@ public class GerenciamentoComercialSpringApplication {
 			
 			/* LATERAL DIREITA DA JANELA */
 			
-			var botaoRemover = new JButton();
+			botaoRemover = new JButton();
 			botaoRemover.setText("Remover");
 			botaoRemover.setPreferredSize(new Dimension(90,30));
 			
@@ -290,13 +287,18 @@ public class GerenciamentoComercialSpringApplication {
 					exibirDialog("Sucesso!", ModalityType.APPLICATION_MODAL, "Produtos removidos da lista");
 				} else {
 					int indice = tabela.getSelectedRow();
-					Produto p = visualizacao.listaTipo.get(indice);
-					visualizacao.removerElemento(p);
-					atualizarInfoCaixa(visualizacao.pegarUltimoElemento());
-					exibirDialog("Sucesso!", ModalityType.APPLICATION_MODAL, "Produto removido da lista");
+					if(indice != -1) {
+						Produto p = visualizacao.listaTipo.get(indice);
+						visualizacao.removerElemento(p);
+						var opProduto = Optional.ofNullable(visualizacao.pegarUltimoElemento());
+						opProduto.ifPresent(this::atualizarInfoCaixa);
+						exibirDialog("Sucesso!", ModalityType.APPLICATION_MODAL, "Produto removido da lista");
+					}
 				}
 				
+				botaoRemover.setEnabled(false);
 			});
+			botaoRemover.setEnabled(false);
 			
 			pCentral.add(botaoRemover, BorderLayout.EAST);
 			
@@ -334,8 +336,10 @@ public class GerenciamentoComercialSpringApplication {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				if (tabela.getSelectedRow() >= 0) {
+					botaoRemover.setEnabled(true);
 					lbLeituraCodBarras.setText("Leitura indisponível");
-					lbLeituraCodBarras.setIcon(lerERedimensionarImagem("errado.png", 25, 25));
+					lbLeituraCodBarras.setIcon(carregarRedimensionarImagem("errado.png", 25, 25));
+					
 				}
 
 			}
@@ -446,7 +450,7 @@ public class GerenciamentoComercialSpringApplication {
 				dialogo.dispose();
 				MenuPrincipal.this.requestFocusInWindow();
 				lbLeituraCodBarras.setText("Pronto para ler");
-				lbLeituraCodBarras.setIcon(lerERedimensionarImagem("barcode.png", 100, 30));
+				lbLeituraCodBarras.setIcon(carregarRedimensionarImagem("barcode.png", 100, 30));
 			});
 
 			//KeyboardFocusManager.clearGlobalFocusOwner();
