@@ -5,6 +5,7 @@ public enum Categoria {
 	LIMPEZA,
 	FRIOS,
 	VERDURAS,
+	HIGIENE,
 	OUTROS;
 	
 	public String getArquivoCorrespondente() {
@@ -17,6 +18,8 @@ public enum Categoria {
 				return "frios.png";
 			case VERDURAS:
 				return "verduras.png";
+			case HIGIENE:
+				return "higiene.png";
 			case OUTROS:
 				return "outros.png";
 			default:
