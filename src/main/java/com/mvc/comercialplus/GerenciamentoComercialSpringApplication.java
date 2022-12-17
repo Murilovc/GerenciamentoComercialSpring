@@ -5,6 +5,7 @@ import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
@@ -34,11 +35,13 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import org.aspectj.weaver.patterns.HasThisTypePatternTriedToSneakInSomeGenericOrParameterizedTypePatternMatchingStuffAnywhereVisitor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
+import com.formdev.flatlaf.FlatLightLaf;
 import com.mvc.comercialplus.gui.Visualizacao;
 import com.mvc.comercialplus.gui.WrapLayout;
 import com.mvc.comercialplus.model.Categoria;
@@ -54,11 +57,11 @@ public class GerenciamentoComercialSpringApplication {
 	public GerenciamentoComercialSpringApplication(ProdutoService repo) {
 		this.produtoService = repo;
 		
-		FlatDarculaLaf.setup();
+		//FlatDarculaLaf.setup();
+		FlatLightLaf.setup();
 		
 		SwingUtilities.invokeLater(new Runnable() { 
 			public void run() { 
-				//testeRuntime();
 				MenuPrincipal menu = new MenuPrincipal(repo);
 			} 
 		});
@@ -136,7 +139,7 @@ public class GerenciamentoComercialSpringApplication {
 			}
 			var icone = new ImageIcon(imagemBytes);
 			var imagemOriginal = icone.getImage();
-			icone.setImage(imagemOriginal.getScaledInstance(altura, largura, Image.SCALE_DEFAULT));
+			icone.setImage(imagemOriginal.getScaledInstance(largura, altura, Image.SCALE_SMOOTH));
 			return icone;
 		}
 		
@@ -154,16 +157,17 @@ public class GerenciamentoComercialSpringApplication {
 
 			lbLeituraCodBarras = new JLabel("Pronto para ler");
 			
-			var icone = carregarImagem("barcode.png", 100, 30);
+			var icone = carregarImagem("barcode.png", 20, 66);
 			lbLeituraCodBarras.setIcon(icone);
+			
+			var pInfo = new JPanel(new FlowLayout(FlowLayout.LEFT));
+			pInfo.add(lbCodBarras);
+			pInfo.add(lbDesconto);
 			
 			pLateralEsq = new JPanel(new BorderLayout());
 			pLateralEsq.setPreferredSize(new Dimension(200,700));
 			
 			pLateralEsq.add(pImagem, BorderLayout.NORTH);
-			var pInfo = new JPanel(new FlowLayout(FlowLayout.LEFT));
-			pInfo.add(lbCodBarras);
-			pInfo.add(lbDesconto);
 			pLateralEsq.add(pInfo, BorderLayout.CENTER);
 			pLateralEsq.add(lbLeituraCodBarras, BorderLayout.SOUTH);
 			
@@ -173,7 +177,7 @@ public class GerenciamentoComercialSpringApplication {
 			campoNomeProduto = new JTextField("Nenhum produto adicionado na lista");
 			campoNomeProduto.setEditable(false);
 			campoNomeProduto.setFont(getFont().deriveFont(36f));
-			campoNomeProduto.setPreferredSize(new Dimension(650,50));
+			campoNomeProduto.setPreferredSize(new Dimension(750,50));
 			campoNomeProduto.setFocusable(false);
 			var lbQuantidade = new JLabel("X");
 			lbQuantidade.setPreferredSize(new Dimension(15,50));
@@ -183,28 +187,38 @@ public class GerenciamentoComercialSpringApplication {
 			campoQuantidade.setFocusable(false);
 			var lbUnidade = new JLabel("UN.");
 			lbUnidade.setPreferredSize(new Dimension(20,50));
+			var lbSeta = new JLabel(carregarImagem("right-arrow.png", 45, 75));
 			
-			var lbPreco = new JLabel("PREÇO:");
+			var lbPreco = new JLabel("PREÇO: ");
 			lbPreco.setFont(getFont().deriveFont(Font.BOLD).deriveFont(36f));
-			//lbPreco.setPreferredSize(new Dimension(100,50));
 			campoPreco = new JTextField("R$ 0,00");
 			campoPreco.setEditable(false);
 			campoPreco.setFont(getFont().deriveFont(36f));
 			campoPreco.setPreferredSize(new Dimension(220,50));
 			campoPreco.setFocusable(false);
 			
-			var pSegundaLinha = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-			pSegundaLinha.setPreferredSize(new Dimension(700,60));
+			JPanel pPrimeiraLinha = new JPanel(new WrapLayout((FlowLayout.LEFT)));
+			pPrimeiraLinha.setSize(new Dimension(755,115));
+			pPrimeiraLinha.add(campoNomeProduto);
+			
+			var pSegundaLinha = new JPanel(new WrapLayout(FlowLayout.LEFT));
+			pSegundaLinha.setSize(new Dimension(755,60));
+			pSegundaLinha.add(lbQuantidade);
+			pSegundaLinha.add(campoQuantidade);
+			pSegundaLinha.add(lbUnidade);
+			pSegundaLinha.add(lbSeta);
 			pSegundaLinha.add(lbPreco);
 			pSegundaLinha.add(campoPreco);
 			
-			JPanel pSuperior = new JPanel(new WrapLayout());
-			pSuperior.setPreferredSize(new Dimension(950,120));
-			pSuperior.add(campoNomeProduto);
-			pSuperior.add(lbQuantidade);
-			pSuperior.add(campoQuantidade);
-			pSuperior.add(lbUnidade);
-			pSuperior.add(pSegundaLinha);
+			//painel para listar as linhas igualmente
+			var pInfoProduto = new JPanel(new GridLayout(2,1));
+			pInfoProduto.add(pPrimeiraLinha);
+			pInfoProduto.add(pSegundaLinha);
+			
+			var pSuperior = new JPanel(new FlowLayout(FlowLayout.CENTER));
+			pSuperior.add(pInfoProduto);
+			
+			
 			
 			
 			/*CENTRO DA JANELA*/
@@ -252,7 +266,7 @@ public class GerenciamentoComercialSpringApplication {
 			/* LATERAL DIREITA DA JANELA */
 			
 			botaoRemover = new JButton("Remover");
-			botaoRemover.setPreferredSize(new Dimension(90,240));
+			//botaoRemover.setPreferredSize(new Dimension(90,240));
 			botaoRemover.setEnabled(false);
 			
 			botaoRemover.addActionListener(e -> {
@@ -274,7 +288,6 @@ public class GerenciamentoComercialSpringApplication {
 					opProduto.ifPresentOrElse(this::atualizarInfoCaixa, () -> {
 						//caixa volta ao estado inicial se não houver produtos na lista
 						ultimoProdutoAdicionado = null;
-						
 						atualizarInfoCaixa();
 					});
 					
@@ -289,7 +302,6 @@ public class GerenciamentoComercialSpringApplication {
 						opProduto.ifPresentOrElse(this::atualizarInfoCaixa, () -> {
 							//caixa volta ao estado inicial se não houver produtos na lista
 							ultimoProdutoAdicionado = null;
-							
 							atualizarInfoCaixa();
 						});
 						
@@ -303,7 +315,7 @@ public class GerenciamentoComercialSpringApplication {
 			
 			
 			botaoCancelar = new JButton("Cancelar");
-			botaoCancelar.setPreferredSize(new Dimension(90,240));
+			//botaoCancelar.setPreferredSize(new Dimension(90,240));
 			botaoCancelar.setEnabled(false);
 			
 			botaoCancelar.addActionListener(e -> {
@@ -314,9 +326,9 @@ public class GerenciamentoComercialSpringApplication {
 				visualizacao.getTable().clearSelection();
 			});
 			
-			var pBotoes = new JPanel(new BorderLayout());
-			pBotoes.add(botaoRemover, BorderLayout.NORTH);
-			pBotoes.add(botaoCancelar, BorderLayout.SOUTH);
+			var pBotoes = new JPanel(new GridLayout(2,1));
+			pBotoes.add(botaoRemover);
+			pBotoes.add(botaoCancelar);
 
 			
 			pCentral.add(pBotoes, BorderLayout.EAST);
@@ -469,7 +481,7 @@ public class GerenciamentoComercialSpringApplication {
 				dialogo.dispose();
 				MenuPrincipal.this.requestFocusInWindow();
 				lbLeituraCodBarras.setText("Pronto para ler");
-				lbLeituraCodBarras.setIcon(carregarImagem("barcode.png", 100, 30));
+				lbLeituraCodBarras.setIcon(carregarImagem("barcode.png", 20, 66));
 			});
 
 			//KeyboardFocusManager.clearGlobalFocusOwner();
@@ -545,6 +557,10 @@ public class GerenciamentoComercialSpringApplication {
 		 *podedendo escolher entre diferentes temas */
 	    //FlatLightLaf.setup();
 	    
+		/** XXX
+		 * kkkkkkkkkkkkk
+		 * perola encontrada em 17/12/2022
+		 * HasThisTypePatternTriedToSneakInSomeGenericOrParameterizedTypePatternMatchingStuffAnywhereVisitor*/
 	}
 	
 }
