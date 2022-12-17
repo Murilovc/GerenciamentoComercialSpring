@@ -1,13 +1,11 @@
 package com.mvc.comercialplus;
 
-import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Image;
-import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -70,6 +68,7 @@ public class GerenciamentoComercialSpringApplication {
 		
 		private JButton btPagamento;
 		private JButton botaoRemover;
+		private JButton botaoCancelar;
 		
 		private JTable tabela;
 		
@@ -92,8 +91,6 @@ public class GerenciamentoComercialSpringApplication {
 		
 		private JPanel pLateralEsq;
 		
-		private ImageIcon imagem;
-		
 		private JLabel lbCategoria;
 		
 		
@@ -101,9 +98,7 @@ public class GerenciamentoComercialSpringApplication {
 			
 			this.service = repo;
 			/* Como este é o primeiro menu, precisa
-			 * explicitamente ser tornado visível,
-			 * já aque a o método da superclasse 
-			 * por padrão torna os menus invisíveis.
+			 * explicitamente ser tornado visível
 			 * 
 			 * NOTA: Se nenhum menu estiver visível,
 			 * a JVM encerra o programa
@@ -118,7 +113,9 @@ public class GerenciamentoComercialSpringApplication {
 
 		}
 		
-		private void carregarImagemCategoria(int largura, int altura) {
+		private ImageIcon carregarImagemCategoria(int largura, int altura) {
+			
+			ImageIcon imagem;
 			
 			if(ultimoProdutoAdicionado != null) {
 				Categoria categoria = ultimoProdutoAdicionado.getCategoria();
@@ -126,7 +123,7 @@ public class GerenciamentoComercialSpringApplication {
 			} else {
 				imagem = carregarImagem("ovos.png", 120, 175);
 			}
-
+			return imagem;
 		}
 		
 		private ImageIcon carregarImagem(String pathArquivo, int altura, int largura) {
@@ -146,9 +143,9 @@ public class GerenciamentoComercialSpringApplication {
 		private void adicionarComponentes() {
 
 			/*LATERAL ESQUERDA DA JANELA*/
-			carregarImagemCategoria(120, 175);
+			ImageIcon iconeCat = carregarImagemCategoria(120, 175);
 			
-			lbCategoria = new JLabel(imagem);
+			lbCategoria = new JLabel(iconeCat);
 			var pImagem = new JPanel();
 			pImagem.setSize(new Dimension(130,185));
 			pImagem.add(lbCategoria);
@@ -254,9 +251,9 @@ public class GerenciamentoComercialSpringApplication {
 			
 			/* LATERAL DIREITA DA JANELA */
 			
-			botaoRemover = new JButton();
-			botaoRemover.setText("Remover");
-			botaoRemover.setPreferredSize(new Dimension(90,30));
+			botaoRemover = new JButton("Remover");
+			botaoRemover.setPreferredSize(new Dimension(90,240));
+			botaoRemover.setEnabled(false);
 			
 			botaoRemover.addActionListener(e -> {
 				if(tabela.getSelectedRowCount() > 1) {
@@ -274,7 +271,12 @@ public class GerenciamentoComercialSpringApplication {
 					visualizacao.removerElementos(listaProdutos);
 					
 					var opProduto = Optional.ofNullable(visualizacao.pegarUltimoElemento());
-					opProduto.ifPresentOrElse(this::atualizarInfoCaixa, () -> atualizarInfoCaixa());
+					opProduto.ifPresentOrElse(this::atualizarInfoCaixa, () -> {
+						//caixa volta ao estado inicial se não houver produtos na lista
+						ultimoProdutoAdicionado = null;
+						
+						atualizarInfoCaixa();
+					});
 					
 					exibirDialog("Sucesso!", ModalityType.APPLICATION_MODAL, "Produtos removidos da lista");
 				} else {
@@ -284,17 +286,40 @@ public class GerenciamentoComercialSpringApplication {
 						visualizacao.removerElemento(p);
 						
 						var opProduto = Optional.ofNullable(visualizacao.pegarUltimoElemento());
-						opProduto.ifPresentOrElse(this::atualizarInfoCaixa, () -> atualizarInfoCaixa());
+						opProduto.ifPresentOrElse(this::atualizarInfoCaixa, () -> {
+							//caixa volta ao estado inicial se não houver produtos na lista
+							ultimoProdutoAdicionado = null;
+							
+							atualizarInfoCaixa();
+						});
 						
 						exibirDialog("Sucesso!", ModalityType.APPLICATION_MODAL, "Produto removido da lista");
 					}
 				}
 				
 				botaoRemover.setEnabled(false);
+				botaoCancelar.setEnabled(false);
 			});
-			botaoRemover.setEnabled(false);
 			
-			pCentral.add(botaoRemover, BorderLayout.EAST);
+			
+			botaoCancelar = new JButton("Cancelar");
+			botaoCancelar.setPreferredSize(new Dimension(90,240));
+			botaoCancelar.setEnabled(false);
+			
+			botaoCancelar.addActionListener(e -> {
+				exibirDialog("OK", ModalityType.APPLICATION_MODAL,
+						"<html>Seleção cancelada, nenhuma<br>alteração na lista de produtos");
+				botaoRemover.setEnabled(false);
+				botaoCancelar.setEnabled(false);
+				visualizacao.getTable().clearSelection();
+			});
+			
+			var pBotoes = new JPanel(new BorderLayout());
+			pBotoes.add(botaoRemover, BorderLayout.NORTH);
+			pBotoes.add(botaoCancelar, BorderLayout.SOUTH);
+
+			
+			pCentral.add(pBotoes, BorderLayout.EAST);
 			
 			/*ADICAO DOS PAINEIS NA JANELA*/
 			this.add(pLateralEsq, BorderLayout.WEST);
@@ -315,6 +340,7 @@ public class GerenciamentoComercialSpringApplication {
 			public void mousePressed(MouseEvent e) {
 				if (tabela.getSelectedRow() >= 0) {
 					botaoRemover.setEnabled(true);
+					botaoCancelar.setEnabled(true);
 					lbLeituraCodBarras.setText("Leitura indisponível");
 					lbLeituraCodBarras.setIcon(carregarImagem("errado.png", 25, 25));
 					
@@ -335,21 +361,21 @@ public class GerenciamentoComercialSpringApplication {
 			//de barras copiado de outra aplicacao
 			@Override
 			public void keyPressed(KeyEvent e) {
-				if(e.isControlDown() || e.isMetaDown()) {
-					if(e.getKeyCode() == KeyEvent.VK_V) {
-						var areaTransferencia = Toolkit.getDefaultToolkit().getSystemClipboard();
-						String str = "1234567890123";
-						//lendo da area de tranferencia
-						try {
-							str = (String)areaTransferencia.getData(DataFlavor.stringFlavor);
-						} catch (UnsupportedFlavorException | IOException e1) {
-							e1.getCause().getMessage();
-						}
-						
-						buffer = str.toCharArray();
-						tratarEntrada(buffer);
-						contador = 0;
+				if((e.isControlDown() || e.isMetaDown()) && e.getKeyCode() == KeyEvent.VK_V) {
+
+					var areaTransferencia = Toolkit.getDefaultToolkit().getSystemClipboard();
+					String str = "1234567890123";
+					//lendo da area de tranferencia
+					try {
+						str = (String)areaTransferencia.getData(DataFlavor.stringFlavor);
+					} catch (UnsupportedFlavorException | IOException e1) {
+						e1.getCause().getMessage();
 					}
+					
+					buffer = str.toCharArray();
+					tratarEntrada(buffer);
+					contador = 0;
+
 				}
 
 			}
@@ -378,8 +404,8 @@ public class GerenciamentoComercialSpringApplication {
 					Produto p = op.get();
 					visualizacao.adicionarElemento(p);
 					ultimoProdutoAdicionado = p;
-					carregarImagemCategoria(120,175);
-					lbCategoria.setIcon(imagem);
+					var icone = carregarImagemCategoria(120,175);
+					lbCategoria.setIcon(icone);
 					
 					atualizarInfoCaixa(p);
 				} else {
@@ -403,6 +429,8 @@ public class GerenciamentoComercialSpringApplication {
 			campoTotal.setText("R$ 0,00");
 			campoNomeProduto.setText("Nenhum produto adicionado na lista");
 			campoQuantidade.setText("0");
+			var icone = carregarImagemCategoria(175, 125);
+			lbCategoria.setIcon(icone);
 		}
 		
 		private void atualizarInfoCaixa(Produto produtoEscaneado) {
