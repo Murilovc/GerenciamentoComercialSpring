@@ -41,6 +41,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
+import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.mvc.comercialplus.gui.Visualizacao;
 import com.mvc.comercialplus.gui.WrapLayout;
@@ -95,6 +96,10 @@ public class GerenciamentoComercialSpringApplication {
 		private JPanel pLateralEsq;
 		
 		private JLabel lbCategoria;
+		
+		private final static short TEMA_CLARO = 1;
+		private final static short TEMA_ESCURO = 2;
+		private static short temaEscolhido = TEMA_CLARO;
 		
 		
 		public MenuPrincipal(ProdutoService repo) {
@@ -215,8 +220,44 @@ public class GerenciamentoComercialSpringApplication {
 			pInfoProduto.add(pPrimeiraLinha);
 			pInfoProduto.add(pSegundaLinha);
 			
-			var pSuperior = new JPanel(new FlowLayout(FlowLayout.CENTER));
-			pSuperior.add(pInfoProduto);
+			//var pTema = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+			var btTema = new JButton();
+			btTema.setIcon(carregarImagem("lua.png", 50, 50));
+			btTema.setContentAreaFilled(false);
+			//btTema.setBorderPainted(false);
+			btTema.addActionListener( e -> {
+				if(temaEscolhido == TEMA_CLARO) {
+					btTema.setIcon(carregarImagem("sol.png", 50, 50));
+					FlatDarculaLaf.setup();
+					SwingUtilities.updateComponentTreeUI(MenuPrincipal.this);
+					temaEscolhido = TEMA_ESCURO;
+				} else {
+					btTema.setIcon(carregarImagem("lua.png", 50, 50));
+					FlatIntelliJLaf.setup();
+					SwingUtilities.updateComponentTreeUI(MenuPrincipal.this);
+					temaEscolhido = TEMA_CLARO;
+				}
+				MenuPrincipal.this.requestFocusInWindow();
+			});
+			//pTema.add(btTema);
+			
+			var btConf = new JButton("<html>Área <br>administrativa");
+			btConf.setPreferredSize(new Dimension(100,50));
+			//deixando o botao tranparente
+			btConf.setContentAreaFilled(false);
+			//btConf.setBorderPainted(false);
+			btConf.addActionListener(e -> {
+				MenuPrincipal.this.requestFocusInWindow();
+			});
+			
+			var pInfoProduto2 = new JPanel(new FlowLayout(FlowLayout.CENTER));
+			pInfoProduto2.add(pInfoProduto);
+			
+			var pSuperior = new JPanel(new BorderLayout());
+			pSuperior.add(btConf, BorderLayout.WEST);
+			pSuperior.add(pInfoProduto2, BorderLayout.CENTER);
+			pSuperior.add(btTema, BorderLayout.EAST);
+			
 			
 			
 			
