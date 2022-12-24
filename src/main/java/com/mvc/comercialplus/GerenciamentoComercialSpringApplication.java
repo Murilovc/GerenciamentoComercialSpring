@@ -29,6 +29,8 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -59,7 +61,7 @@ public class GerenciamentoComercialSpringApplication {
 		this.produtoService = repo;
 		
 		//FlatDarculaLaf.setup();
-		FlatLightLaf.setup();
+		FlatIntelliJLaf.setup();
 		
 		SwingUtilities.invokeLater(new Runnable() { 
 			public void run() { 
@@ -150,6 +152,21 @@ public class GerenciamentoComercialSpringApplication {
 		
 		private void adicionarComponentes() {
 
+			/*BARRA DE MENU*/
+			JMenuBar menuBar = new JMenuBar();
+			//seletor de cliente cadastrado como
+			//item de menu no menu arquivo?
+			var menuArquivo = new JMenu("Arquivo");
+			var menuOpcoes = new JMenu("Opções");
+			var menuAjuda = new JMenu("Ajuda");
+			var menuSobre = new JMenu("Sobre");
+			
+			menuBar.add(menuArquivo);
+			menuBar.add(menuOpcoes);
+			menuBar.add(menuAjuda);
+			menuBar.add(menuSobre);
+			
+			
 			/*LATERAL ESQUERDA DA JANELA*/
 			ImageIcon iconeCat = carregarImagemCategoria(120, 175);
 			
@@ -178,7 +195,6 @@ public class GerenciamentoComercialSpringApplication {
 			
 			
 			/*PARTE SUPERIOR DA JANELA*/
-		
 			campoNomeProduto = new JTextField("Nenhum produto adicionado na lista");
 			campoNomeProduto.setEditable(false);
 			campoNomeProduto.setFont(getFont().deriveFont(36f));
@@ -220,11 +236,11 @@ public class GerenciamentoComercialSpringApplication {
 			pInfoProduto.add(pPrimeiraLinha);
 			pInfoProduto.add(pSegundaLinha);
 			
-			//var pTema = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 			var btTema = new JButton();
 			btTema.setIcon(carregarImagem("lua.png", 50, 50));
+			//deixando o botao transparente
 			btTema.setContentAreaFilled(false);
-			//btTema.setBorderPainted(false);
+			btTema.setBorderPainted(false);
 			btTema.addActionListener( e -> {
 				if(temaEscolhido == TEMA_CLARO) {
 					btTema.setIcon(carregarImagem("sol.png", 50, 50));
@@ -239,13 +255,12 @@ public class GerenciamentoComercialSpringApplication {
 				}
 				MenuPrincipal.this.requestFocusInWindow();
 			});
-			//pTema.add(btTema);
 			
 			var btConf = new JButton("<html>Área <br>administrativa");
 			btConf.setPreferredSize(new Dimension(100,50));
-			//deixando o botao tranparente
+			//deixando o botao transparente
 			btConf.setContentAreaFilled(false);
-			//btConf.setBorderPainted(false);
+			btConf.setBorderPainted(false);
 			btConf.addActionListener(e -> {
 				MenuPrincipal.this.requestFocusInWindow();
 			});
@@ -259,11 +274,7 @@ public class GerenciamentoComercialSpringApplication {
 			pSuperior.add(btTema, BorderLayout.EAST);
 			
 			
-			
-			
-			
 			/*CENTRO DA JANELA*/
-			
 			List<Produto> clientes = new ArrayList<>();
 			Class<?>[] classes = {Long.class, String.class, String.class,
 					String.class, BigDecimal.class, BigDecimal.class};
@@ -287,7 +298,6 @@ public class GerenciamentoComercialSpringApplication {
 			
 			
 			/* PARTE INFERIOR DA JANELA */
-			
 			var lbTotal = new JLabel("TOTAL:");
 			lbTotal.setFont(getFont().deriveFont(Font.BOLD).deriveFont(36f));
 			campoTotal = new JTextField("R$ 0,00");
@@ -305,7 +315,6 @@ public class GerenciamentoComercialSpringApplication {
 			pInferior.add(btPagamento);
 			
 			/* LATERAL DIREITA DA JANELA */
-			
 			botaoRemover = new JButton("Remover");
 			//botaoRemover.setPreferredSize(new Dimension(90,240));
 			botaoRemover.setEnabled(false);
@@ -370,11 +379,14 @@ public class GerenciamentoComercialSpringApplication {
 			var pBotoes = new JPanel(new GridLayout(2,1));
 			pBotoes.add(botaoRemover);
 			pBotoes.add(botaoCancelar);
-
 			
 			pCentral.add(pBotoes, BorderLayout.EAST);
 			
-			/*ADICAO DOS PAINEIS NA JANELA*/
+			
+			
+			/*ADICAO DOS PAINEIS E COMPONENTES NA JANELA*/
+			this.setJMenuBar(menuBar);
+			
 			this.add(pLateralEsq, BorderLayout.WEST);
 			this.add(pSuperior, BorderLayout.NORTH);
 			this.add(pCentral, BorderLayout.CENTER);
