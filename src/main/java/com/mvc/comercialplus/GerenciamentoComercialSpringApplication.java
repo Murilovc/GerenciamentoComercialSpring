@@ -45,6 +45,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLightLaf;
+import com.mvc.comercialplus.gui.JanelaPagamento;
 import com.mvc.comercialplus.gui.Visualizacao;
 import com.mvc.comercialplus.gui.WrapLayout;
 import com.mvc.comercialplus.model.Categoria;
@@ -70,7 +71,7 @@ public class GerenciamentoComercialSpringApplication {
 		});
 	}
 	
-	static class MenuPrincipal extends JFrame{
+	public static class MenuPrincipal extends JFrame{
 		
 		private JButton btPagamento;
 		private JButton botaoRemover;
@@ -559,12 +560,10 @@ public class GerenciamentoComercialSpringApplication {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				//MenuPrincipal.this.setVisible(false);
 				
-				//desativarBotoes();
-				
-				long valor = Long.valueOf(String.valueOf(tabela.getValueAt(tabela.getSelectedRow(), 0)));
-				
-				MenuPrincipal.this.setVisible(false);
+				JanelaPagamento jp = new JanelaPagamento(MenuPrincipal.this);
+				jp.setVisible(true);
 			}
 			
 		}
