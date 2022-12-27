@@ -34,3 +34,4 @@ build/
 
 ### Eclipse ###
 .settings/
+src/main/java/com/mvc/comercialplus/gui/NavigationFilterPrefixWithBackspace.java
