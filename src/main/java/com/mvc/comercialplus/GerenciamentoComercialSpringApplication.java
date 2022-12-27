@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +46,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLightLaf;
+import com.mvc.comercialplus.config.Configuracao;
+import com.mvc.comercialplus.controller.CaixaController;
 import com.mvc.comercialplus.gui.JanelaPagamento;
 import com.mvc.comercialplus.gui.Visualizacao;
 import com.mvc.comercialplus.gui.WrapLayout;
@@ -213,7 +216,7 @@ public class GerenciamentoComercialSpringApplication {
 			
 			var lbPreco = new JLabel("PREÇO: ");
 			lbPreco.setFont(getFont().deriveFont(Font.BOLD).deriveFont(36f));
-			campoPreco = new JTextField("R$ 0,00");
+			campoPreco = new JTextField(Configuracao.PREFIXO_MONETARIO.get()+"0,00");
 			campoPreco.setEditable(false);
 			campoPreco.setFont(getFont().deriveFont(36f));
 			campoPreco.setPreferredSize(new Dimension(220,50));
@@ -301,7 +304,7 @@ public class GerenciamentoComercialSpringApplication {
 			/* PARTE INFERIOR DA JANELA */
 			var lbTotal = new JLabel("TOTAL:");
 			lbTotal.setFont(getFont().deriveFont(Font.BOLD).deriveFont(36f));
-			campoTotal = new JTextField("R$ 0,00");
+			campoTotal = new JTextField(Configuracao.PREFIXO_MONETARIO.get()+"0,00");
 			campoTotal.setFont(getFont().deriveFont(Font.BOLD).deriveFont(36f));
 			campoTotal.setEditable(false);
 			campoTotal.setFocusable(false);
@@ -491,8 +494,8 @@ public class GerenciamentoComercialSpringApplication {
 		 * de compra do cliente.
 		 */
 		private void atualizarInfoCaixa() {
-			campoPreco.setText("R$ 0,00");
-			campoTotal.setText("R$ 0,00");
+			campoPreco.setText(Configuracao.PREFIXO_MONETARIO.get()+"0,00");
+			campoTotal.setText(Configuracao.PREFIXO_MONETARIO.get()+"0,00");
 			campoNomeProduto.setText("Nenhum produto adicionado na lista");
 			campoQuantidade.setText("0");
 			var icone = carregarImagemCategoria(175, 125);
@@ -505,6 +508,9 @@ public class GerenciamentoComercialSpringApplication {
 			BigDecimal valorUnidades = new BigDecimal(0);
 			BigDecimal valorTotal = new BigDecimal(0);
 			
+			/* TODO Salvar o total em uma variavel global neste arquivo,
+			 * para evitar te de somar todos os produtos sempre que um
+			 * novo produto e adicionado na lista*/
 			for(Produto produto : visualizacao.listaTipo) {
 				valorTotal = produto.getPreco().add(valorTotal);
 				if(produtoEscaneado.equals(produto)) {
@@ -513,9 +519,9 @@ public class GerenciamentoComercialSpringApplication {
 				}
 			}
 			campoQuantidade.setText(String.valueOf(quantidade));
-			campoPreco.setText("R$ "+valorUnidades.toString().replace('.', ','));
+			campoPreco.setText(CaixaController.converterMonetarioEmTexto(valorUnidades));
 			campoNomeProduto.setText(produtoEscaneado.getNome());
-			campoTotal.setText("R$ "+valorTotal.toString().replace('.', ','));
+			campoTotal.setText(CaixaController.converterMonetarioEmTexto(valorTotal));
 			lbCodBarras.setText("<html>Código de barras escaneado:<br>"+produtoEscaneado.getCodigoBarras());
 			lbDesconto.setText("<html>Desconto:<br>Nenhum");
 		}
@@ -531,7 +537,7 @@ public class GerenciamentoComercialSpringApplication {
 			
 			var lbMensagem = new JLabel(mensagem);
 			var btFechar = new JButton("Fechar");
-			btFechar.addActionListener((evento) -> {
+			btFechar.addActionListener( evento -> {
 				dialogo.dispose();
 				MenuPrincipal.this.requestFocusInWindow();
 				lbLeituraCodBarras.setText("Pronto para ler");
@@ -560,10 +566,18 @@ public class GerenciamentoComercialSpringApplication {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				//MenuPrincipal.this.setVisible(false);
+				MenuPrincipal.this.requestFocusInWindow();
 				
-				JanelaPagamento jp = new JanelaPagamento(MenuPrincipal.this);
-				jp.setVisible(true);
+				SwingUtilities.invokeLater(() -> {
+					JanelaPagamento jp;
+
+					jp = new JanelaPagamento(MenuPrincipal.this,
+							CaixaController.converterTextoEmMonetario(campoTotal.getText()));
+					jp.setVisible(true);
+
+					
+				});
+				
 			}
 			
 		}
