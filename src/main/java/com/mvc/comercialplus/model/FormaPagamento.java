@@ -2,7 +2,7 @@ package com.mvc.comercialplus.model;
 
 public enum FormaPagamento {
 
-	PENDURA,
+	FIADO,
 	DINHEIRO,
 	PIX,
 	QRCODE_PIX,
@@ -12,7 +12,7 @@ public enum FormaPagamento {
 	
 	public double taxaPorcentagem() {
 		switch(this) {
-			case PENDURA:
+			case FIADO:
 				return 0;
 			case DINHEIRO:
 				return 0;
