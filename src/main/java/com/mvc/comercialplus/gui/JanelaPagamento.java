@@ -46,7 +46,7 @@ public class JanelaPagamento extends JDialog{
 	
 	public JanelaPagamento(MenuPrincipal pai, BigDecimal valorProdutos) {
 		
-		pai.setVisible(false);
+		//pai.setVisible(false);
 		
 		this.valorProdutos = valorProdutos;
 		//inicialmente se presume que a venda sera em dinheiro
@@ -69,6 +69,15 @@ public class JanelaPagamento extends JDialog{
 	private void adicionarComponentes(MenuPrincipal pai) {
 		/*PARTE SUPERIOR DA JANELA*/
 		var radioDinheiro = new JRadioButton("DINHEIRO");
+		radioDinheiro.addActionListener(evento -> {
+			if(internalFrame != null) {
+				desktopPane.remove(internalFrame);
+				internalFrame.dispose();
+			}
+			internalFrame = criarFrameInternoDinheiro();
+			desktopPane.add(internalFrame);
+			internalFrame.setVisible(true);
+		});
 		var radioPix = new JRadioButton("PIX");
 		var radioQRPix = new JRadioButton("QR CODE PIX");
 		var radioVale = new JRadioButton("CARTÃO VALE ALIMENTAÇÃO");
@@ -79,7 +88,7 @@ public class JanelaPagamento extends JDialog{
 				desktopPane.remove(internalFrame);
 				internalFrame.dispose();
 			}
-			internalFrame = criarInternalFrameCredito();
+			internalFrame = criarFrameInternoCredito();
 			desktopPane.add(internalFrame);
 			internalFrame.setVisible(true);
 		});
@@ -119,7 +128,7 @@ public class JanelaPagamento extends JDialog{
 		
 		/*PARTE CENTRAL DA JANELA*/
 		desktopPane = new JDesktopPane();
-		internalFrame = criarInternalFrameBase();
+		internalFrame = criarFrameInternoDinheiro();
 		desktopPane.add(internalFrame);
 		//desktopPane.getDesktopManager();
 		internalFrame.setVisible(true);
@@ -160,17 +169,53 @@ public class JanelaPagamento extends JDialog{
 		this.add(pInferior, BorderLayout.SOUTH);
 	}
 	
-	private JInternalFrame criarInternalFrameCredito() {
-		var frame = criarInternalFrameBase();
+	private JInternalFrame criarFrameInternoDinheiro() {
+		var frame = criarFrameInternoBasico();
+		frame.setTitle("Pagamento em dinheiro");
+		
+		var lbDinheiro = new JLabel("Dinheiro recebido:");
+		lbDinheiro.setFont(lbDinheiro.getFont().deriveFont(23f).deriveFont(Font.BOLD));
+		var campoDinheiro = new JTextField();
+		campoDinheiro.setFont(campoDinheiro.getFont().deriveFont(25f));
+		campoDinheiro.setColumns(10);
+		
+		var lbTroco = new JLabel("Troco:");
+		lbTroco.setFont(lbTroco.getFont().deriveFont(23f).deriveFont(Font.BOLD));
+		var campoTroco = new JTextField();
+		campoTroco.setFont(campoTroco.getFont().deriveFont(25f));
+		campoTroco.setColumns(10);
+		campoTroco.setEditable(false);
+		
+		var pDinheiro = new JPanel(new WrapLayout(FlowLayout.LEFT));
+		pDinheiro.setPreferredSize(new Dimension(300,60));
+		var pTroco = new JPanel(new WrapLayout(FlowLayout.LEFT));
+		pTroco.setPreferredSize(new Dimension(300,60));
+		
+		pDinheiro.add(lbDinheiro);
+		pDinheiro.add(campoDinheiro);
+		pTroco.add(lbTroco);
+		pTroco.add(campoTroco);
+		
+		JPanel pCentral = new JPanel(new GridLayout(2,1));
+		pCentral.add(pDinheiro);
+		pCentral.add(pTroco);
+		
+		frame.add(pCentral, BorderLayout.WEST);
+		
+		return frame;
+	}
+	
+	private JInternalFrame criarFrameInternoCredito() {
+		var frame = criarFrameInternoBasico();
 		frame.setTitle("Pagamento com cartão de crédito");
 		frame.add(new JLabel("CREDITO"), BorderLayout.CENTER);
 		return frame;
 	}
 	
-	private JInternalFrame criarInternalFrameBase() {
+	private JInternalFrame criarFrameInternoBasico() {
 		var frame = new JInternalFrame("Janela interna base");
 		frame.setLayout(new BorderLayout());
-		frame.setSize(new Dimension(740,400));
+		frame.setSize(new Dimension(740,430));
 		frame.setResizable(true);
 		
 		var lbValor = new JLabel("Valor dos produtos:");
@@ -187,7 +232,7 @@ public class JanelaPagamento extends JDialog{
 		pCampoVenda.add(campoValorVenda);
 		
 		
-		var lbDesconto = new JLabel("Aplicar desconto?");
+		var lbDesconto = new JLabel("Adicionar desconto?");
 		lbDesconto.setFont(lbDesconto.getFont().deriveFont(23f).deriveFont(Font.BOLD));
 		
 		campoDesconto = new JFormattedTextField();
@@ -235,11 +280,11 @@ public class JanelaPagamento extends JDialog{
 		pAdicionarDesconto.add(campoDesconto);
 		pAdicionarDesconto.add(btAplicarDesconto);
 		
-		JPanel pSuperior = new JPanel(new GridLayout(1,2));
+		JPanel pSuperior = new JPanel(new GridLayout(2,1));
 		pSuperior.add(pValor);
 		pSuperior.add(pCampoVenda);
 		
-		JPanel pInferior = new JPanel(new GridLayout(1,2));
+		JPanel pInferior = new JPanel(new GridLayout(2,1));
 		pInferior.add(pInfoDesconto);
 		pInferior.add(pAdicionarDesconto);
 		
