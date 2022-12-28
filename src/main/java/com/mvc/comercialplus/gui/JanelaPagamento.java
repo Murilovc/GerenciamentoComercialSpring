@@ -25,6 +25,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
 import javax.swing.text.InternationalFormatter;
 
 import com.mvc.comercialplus.GerenciamentoComercialSpringApplication.MenuPrincipal;
@@ -172,12 +173,15 @@ public class JanelaPagamento extends JDialog{
 	private JInternalFrame criarFrameInternoDinheiro() {
 		var frame = criarFrameInternoBasico();
 		frame.setTitle("Pagamento em dinheiro");
+		frame.setSize(new Dimension(740,450));
 		
 		var lbDinheiro = new JLabel("Dinheiro recebido:");
 		lbDinheiro.setFont(lbDinheiro.getFont().deriveFont(23f).deriveFont(Font.BOLD));
-		var campoDinheiro = new JTextField();
+		var campoDinheiro = new JFormattedTextField();
 		campoDinheiro.setFont(campoDinheiro.getFont().deriveFont(25f));
-		campoDinheiro.setColumns(10);
+		campoDinheiro.setColumns(9);
+		campoDinheiro.setFormatterFactory(new FormatadorDinheiroFactory());
+		campoDinheiro.setText(Configuracao.PREFIXO_MONETARIO.get()+"0");
 		
 		var lbTroco = new JLabel("Troco:");
 		lbTroco.setFont(lbTroco.getFont().deriveFont(23f).deriveFont(Font.BOLD));
@@ -186,15 +190,30 @@ public class JanelaPagamento extends JDialog{
 		campoTroco.setColumns(10);
 		campoTroco.setEditable(false);
 		
+		var btCalcularTroco = new JButton("Troco");
+		btCalcularTroco.addActionListener(quandoClicado -> {
+			var dinheiroRecebido = CaixaController.converterTextoEmMonetario(campoDinheiro.getText());
+			var troco = dinheiroRecebido.subtract(valorFinal);
+			campoTroco.setText(CaixaController.converterMonetarioEmTexto(troco));
+		});
+		btCalcularTroco.setPreferredSize(new Dimension(65,45));
+		
+		campoDinheiro.addKeyListener(new EscutadorTeclado(btCalcularTroco));
+		
 		var pDinheiro = new JPanel(new WrapLayout(FlowLayout.LEFT));
-		pDinheiro.setPreferredSize(new Dimension(300,60));
+		pDinheiro.setPreferredSize(new Dimension(310,60));
 		var pTroco = new JPanel(new WrapLayout(FlowLayout.LEFT));
 		pTroco.setPreferredSize(new Dimension(300,60));
 		
+		var pDinheiroLinha1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		pDinheiroLinha1.setBorder(new EmptyBorder(pDinheiroLinha1.getInsets()));
+		pDinheiroLinha1.add(campoDinheiro);
+		pDinheiroLinha1.add(btCalcularTroco);
 		pDinheiro.add(lbDinheiro);
-		pDinheiro.add(campoDinheiro);
+		pDinheiro.add(pDinheiroLinha1);
 		pTroco.add(lbTroco);
 		pTroco.add(campoTroco);
+		
 		
 		JPanel pCentral = new JPanel(new GridLayout(2,1));
 		pCentral.add(pDinheiro);
@@ -238,13 +257,7 @@ public class JanelaPagamento extends JDialog{
 		campoDesconto = new JFormattedTextField();
 		campoDesconto.setFont(campoDesconto.getFont().deriveFont(28f));
 		campoDesconto.setPreferredSize(new Dimension(150,45));
-		var formatador = new FormatadorDinheiroFactory();
-		//parece que nao eh necessario chamar install,
-		//mas o importante eh NAO chama-lo dentro de
-		//FormatadorDinheiroFactory.getFormatter() 
-		//pois esse metodo eh chamado varias vezes pelo Swing.
-		formatador.getFormatter(campoDesconto).install(campoDesconto);
-        campoDesconto.setFormatterFactory(formatador);
+        campoDesconto.setFormatterFactory(new FormatadorDinheiroFactory());
         campoDesconto.setText(Configuracao.PREFIXO_MONETARIO.get()+"0");
         campoDesconto.setEnabled(false);
         
@@ -325,20 +338,17 @@ public class JanelaPagamento extends JDialog{
 	
 	protected class EscutadorTeclado extends KeyAdapter {
 		
-		//buffer de caracteres com tamanho maximo suficiente
-		//para acomodar um codigo de barras padrao EAN-13
-		char[] buffer = new char[13];
-		short contador = 0;
-					
+		JButton btCalcularTroco;
+		
+		public EscutadorTeclado(JButton botao) {
+			btCalcularTroco = botao;
+		}
+		
 		@Override
 		public void keyTyped(KeyEvent e) {
-			buffer[contador] = e.getKeyChar();
-			contador++;
-			
-			var valor = new String(buffer);
-
-			contador = 0;
-			
+			if(e.getKeyChar() == 't' || e.getKeyChar() == 'T') {
+				btCalcularTroco.doClick();
+			}
 		}
 	}
 	
