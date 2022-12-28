@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.IllegalComponentStateException;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
@@ -34,6 +35,7 @@ import javax.swing.text.InternationalFormatter;
 import com.mvc.comercialplus.GerenciamentoComercialSpringApplication.MenuPrincipal;
 import com.mvc.comercialplus.config.Configuracao;
 import com.mvc.comercialplus.controller.CaixaController;
+import com.mvc.comercialplus.model.FormaPagamento;
 
 @SuppressWarnings("serial")
 public class JanelaPagamento extends JDialog{
@@ -89,7 +91,27 @@ public class JanelaPagamento extends JDialog{
 		var radioPix = new JRadioButton("PIX");
 		var radioQRPix = new JRadioButton("QR CODE PIX");
 		var radioVale = new JRadioButton("CARTÃO VALE ALIMENTAÇÃO");
+		radioVale.addItemListener(eventoMarcado -> {
+			if(internalFrame != null) {
+				desktopPane.remove(internalFrame);
+				internalFrame.dispose();
+				desktopPane.repaint();
+			}
+			internalFrame = criarFrameInternoCartao(FormaPagamento.CARTAO_VALE);
+			desktopPane.add(internalFrame);
+			internalFrame.setVisible(true);	
+		});
 		var radioDebito = new JRadioButton("CARTÃO DE DÉBITO");
+		radioDebito.addItemListener(eventoMarcado -> {
+			if(internalFrame != null) {
+				desktopPane.remove(internalFrame);
+				internalFrame.dispose();
+				desktopPane.repaint();
+			}
+			internalFrame = criarFrameInternoCartao(FormaPagamento.CARTAO_DEBITO);
+			desktopPane.add(internalFrame);
+			internalFrame.setVisible(true);	
+		});
 		var radioCredito = new JRadioButton("CARTÃO DE CRÉDITO");
 		radioCredito.addItemListener(evento -> {
 			if(internalFrame != null) {
@@ -97,10 +119,9 @@ public class JanelaPagamento extends JDialog{
 				internalFrame.dispose();
 				desktopPane.repaint();
 			}
-			internalFrame = criarFrameInternoCredito();
+			internalFrame = criarFrameInternoCartao(FormaPagamento.CARTAO_CREDITO);
 			desktopPane.add(internalFrame);
-			internalFrame.setVisible(true);
-			
+			internalFrame.setVisible(true);	
 		});
 		var radioPendura = new JRadioButton("FIADO");
 		var btGrupo = new ButtonGroup();
@@ -185,7 +206,6 @@ public class JanelaPagamento extends JDialog{
 		frame.setTitle("Pagamento em dinheiro");
 		frame.setSize(new Dimension(740,450));
 		
-		
 		var lbDinheiro = new JLabel("Dinheiro recebido:");
 		lbDinheiro.setFont(lbDinheiro.getFont().deriveFont(23f).deriveFont(Font.BOLD));
 		var campoDinheiro = new JFormattedTextField();
@@ -201,17 +221,13 @@ public class JanelaPagamento extends JDialog{
 		campoTroco.setColumns(10);
 		campoTroco.setEditable(false);
 		campoTroco.addFocusListener(new FocusListener() {
-			@Override
 			public void focusGained(FocusEvent e) { btFinalizar.requestFocusInWindow(); }
-			@Override
 			public void focusLost(FocusEvent e) {}
 		});
 		
 		campoDinheiro.addFocusListener(new EscutadorFoco(campoDinheiro));
 		campoDinheiro.addFocusListener(new FocusListener() {
-			@Override
 			public void focusGained(FocusEvent e) {}
-			@Override
 			public void focusLost(FocusEvent e) {
 				var dinheiroRecebido = CaixaController.converterTextoEmMonetario(campoDinheiro.getText());
 				var troco = dinheiroRecebido.subtract(valorFinal);
@@ -251,9 +267,25 @@ public class JanelaPagamento extends JDialog{
 		return frame;
 	}
 	
-	private JInternalFrame criarFrameInternoCredito() {
+	private JInternalFrame criarFrameInternoCartao(FormaPagamento tipoCartao) {
 		var frame = criarFrameInternoBasico();
-		frame.setTitle("Pagamento com cartão de crédito");
+		
+		var pCentral = new JPanel(new WrapLayout(FlowLayout.LEFT));
+		
+		switch(tipoCartao) {
+			case CARTAO_VALE:
+				frame.setTitle("Pagamento com cartão vale-alimentação");
+				break;
+			case CARTAO_DEBITO:
+				frame.setTitle("Pagamento com cartão de débito");
+				break;
+			case CARTAO_CREDITO:
+				frame.setTitle("Pagamento com cartão de crédito");
+				break;
+			default:
+				throw new IllegalComponentStateException();
+		}
+		
 		frame.add(new JLabel("CREDITO"), BorderLayout.CENTER);
 		return frame;
 	}
@@ -276,7 +308,6 @@ public class JanelaPagamento extends JDialog{
 		
 		JPanel pCampoVenda = new JPanel(new WrapLayout(FlowLayout.LEFT));
 		pCampoVenda.add(campoValorVenda);
-		
 		
 		var lbDesconto = new JLabel("Desconto?");
 		lbDesconto.setFont(lbDesconto.getFont().deriveFont(23f).deriveFont(Font.BOLD));
