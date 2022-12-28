@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
@@ -25,6 +27,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.text.InternationalFormatter;
 
@@ -74,10 +77,12 @@ public class JanelaPagamento extends JDialog{
 			if(internalFrame != null) {
 				desktopPane.remove(internalFrame);
 				internalFrame.dispose();
+				desktopPane.repaint();
 			}
 			internalFrame = criarFrameInternoDinheiro();
 			desktopPane.add(internalFrame);
 			internalFrame.setVisible(true);
+			
 		});
 		var radioPix = new JRadioButton("PIX");
 		var radioQRPix = new JRadioButton("QR CODE PIX");
@@ -88,10 +93,12 @@ public class JanelaPagamento extends JDialog{
 			if(internalFrame != null) {
 				desktopPane.remove(internalFrame);
 				internalFrame.dispose();
+				desktopPane.repaint();
 			}
 			internalFrame = criarFrameInternoCredito();
 			desktopPane.add(internalFrame);
 			internalFrame.setVisible(true);
+			
 		});
 		var radioPendura = new JRadioButton("FIADO");
 		var btGrupo = new ButtonGroup();
@@ -151,9 +158,10 @@ public class JanelaPagamento extends JDialog{
 		var btFinalizar = new JButton("CONFIRMAR");
 		btFinalizar.setPreferredSize(new Dimension(110,55));
 		btFinalizar.addActionListener(clicado -> {
-			//tratar a venda aqui
-			//adicionar ela ao BD e
-			//imprimir comprovante
+			/* TODO 
+			 * tratar a venda aqui
+			 * adicionar ela ao BD e
+			 * imprimir comprovante*/
 			pai.setVisible(true);
 			this.dispose();
 		});
@@ -175,6 +183,7 @@ public class JanelaPagamento extends JDialog{
 		frame.setTitle("Pagamento em dinheiro");
 		frame.setSize(new Dimension(740,450));
 		
+		
 		var lbDinheiro = new JLabel("Dinheiro recebido:");
 		lbDinheiro.setFont(lbDinheiro.getFont().deriveFont(23f).deriveFont(Font.BOLD));
 		var campoDinheiro = new JFormattedTextField();
@@ -190,27 +199,36 @@ public class JanelaPagamento extends JDialog{
 		campoTroco.setColumns(10);
 		campoTroco.setEditable(false);
 		
-		var btCalcularTroco = new JButton("Troco");
-		btCalcularTroco.addActionListener(quandoClicado -> {
-			var dinheiroRecebido = CaixaController.converterTextoEmMonetario(campoDinheiro.getText());
-			var troco = dinheiroRecebido.subtract(valorFinal);
-			campoTroco.setText(CaixaController.converterMonetarioEmTexto(troco));
+		campoDinheiro.addFocusListener(new EscutadorFoco(campoDinheiro));
+		campoDinheiro.addFocusListener(new FocusListener() {
+			@Override
+			public void focusGained(FocusEvent e) {}
+			@Override
+			public void focusLost(FocusEvent e) {
+				var dinheiroRecebido = CaixaController.converterTextoEmMonetario(campoDinheiro.getText());
+				var troco = dinheiroRecebido.subtract(valorFinal);
+				campoTroco.setText(CaixaController.converterMonetarioEmTexto(troco));
+			}
 		});
-		btCalcularTroco.setPreferredSize(new Dimension(65,45));
 		
-		campoDinheiro.addKeyListener(new EscutadorTeclado(btCalcularTroco));
+		campoDinheiro.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if(e.getKeyChar() == KeyEvent.VK_ENTER) {
+					var dinheiroRecebido = CaixaController.converterTextoEmMonetario(campoDinheiro.getText());
+					var troco = dinheiroRecebido.subtract(valorFinal);
+					campoTroco.setText(CaixaController.converterMonetarioEmTexto(troco));
+				}
+			}
+		});
 		
 		var pDinheiro = new JPanel(new WrapLayout(FlowLayout.LEFT));
 		pDinheiro.setPreferredSize(new Dimension(310,60));
 		var pTroco = new JPanel(new WrapLayout(FlowLayout.LEFT));
 		pTroco.setPreferredSize(new Dimension(300,60));
 		
-		var pDinheiroLinha1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		pDinheiroLinha1.setBorder(new EmptyBorder(pDinheiroLinha1.getInsets()));
-		pDinheiroLinha1.add(campoDinheiro);
-		pDinheiroLinha1.add(btCalcularTroco);
 		pDinheiro.add(lbDinheiro);
-		pDinheiro.add(pDinheiroLinha1);
+		pDinheiro.add(campoDinheiro);
 		pTroco.add(lbTroco);
 		pTroco.add(campoTroco);
 		
@@ -251,7 +269,7 @@ public class JanelaPagamento extends JDialog{
 		pCampoVenda.add(campoValorVenda);
 		
 		
-		var lbDesconto = new JLabel("Adicionar desconto?");
+		var lbDesconto = new JLabel("Desconto?");
 		lbDesconto.setFont(lbDesconto.getFont().deriveFont(23f).deriveFont(Font.BOLD));
 		
 		campoDesconto = new JFormattedTextField();
@@ -259,7 +277,9 @@ public class JanelaPagamento extends JDialog{
 		campoDesconto.setPreferredSize(new Dimension(150,45));
         campoDesconto.setFormatterFactory(new FormatadorDinheiroFactory());
         campoDesconto.setText(Configuracao.PREFIXO_MONETARIO.get()+"0");
+        campoDesconto.addFocusListener(new EscutadorFoco(campoDesconto));
         campoDesconto.setEnabled(false);
+        campoDesconto.setVisible(false);
         
 		var btAplicarDesconto = new JButton("Aplicar");
 		btAplicarDesconto.addActionListener( quandoClicado -> {
@@ -271,16 +291,21 @@ public class JanelaPagamento extends JDialog{
 		});
 		btAplicarDesconto.setPreferredSize(new Dimension(85,45));
 		btAplicarDesconto.setEnabled(false);
+		btAplicarDesconto.setVisible(false);
 		
         JCheckBox boxDesconto = new JCheckBox("Sim");
         boxDesconto.addActionListener(clicado -> {
         	if(boxDesconto.isSelected()) {
         		campoDesconto.setEnabled(true);
+        		campoDesconto.setVisible(true);
         		btAplicarDesconto.setEnabled(true);
+        		btAplicarDesconto.setVisible(true);
         	}        		
         	else {
         		campoDesconto.setEnabled(false);
+        		campoDesconto.setVisible(false);
         		btAplicarDesconto.setEnabled(false);
+        		btAplicarDesconto.setVisible(false);
         	}
         		
         });
@@ -336,20 +361,22 @@ public class JanelaPagamento extends JDialog{
         }
     }
 	
-	protected class EscutadorTeclado extends KeyAdapter {
+	protected class EscutadorFoco implements FocusListener {
 		
-		JButton btCalcularTroco;
+		JFormattedTextField ftf;
 		
-		public EscutadorTeclado(JButton botao) {
-			btCalcularTroco = botao;
+		public EscutadorFoco(JFormattedTextField ftf) {
+			this.ftf = ftf;
 		}
 		
 		@Override
-		public void keyTyped(KeyEvent e) {
-			if(e.getKeyChar() == 't' || e.getKeyChar() == 'T') {
-				btCalcularTroco.doClick();
-			}
+		public void focusGained(FocusEvent e) {
+		    SwingUtilities.invokeLater(() -> {
+		        ftf.select(3,4);
+		    });
 		}
+		@Override
+		public void focusLost(FocusEvent e) {}
 	}
 	
 //	MaskFormatter mascaraDin;
