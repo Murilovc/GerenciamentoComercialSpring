@@ -48,6 +48,8 @@ public class JanelaPagamento extends JDialog{
 	
 	private JDesktopPane desktopPane;
 	
+	private JButton btFinalizar;
+	
 	public JanelaPagamento(MenuPrincipal pai, BigDecimal valorProdutos) {
 		
 		//pai.setVisible(false);
@@ -155,7 +157,7 @@ public class JanelaPagamento extends JDialog{
 			pai.setVisible(true);
 			this.dispose();
 		});
-		var btFinalizar = new JButton("CONFIRMAR");
+		btFinalizar = new JButton("CONFIRMAR");
 		btFinalizar.setPreferredSize(new Dimension(110,55));
 		btFinalizar.addActionListener(clicado -> {
 			/* TODO 
@@ -198,6 +200,12 @@ public class JanelaPagamento extends JDialog{
 		campoTroco.setFont(campoTroco.getFont().deriveFont(25f));
 		campoTroco.setColumns(10);
 		campoTroco.setEditable(false);
+		campoTroco.addFocusListener(new FocusListener() {
+			@Override
+			public void focusGained(FocusEvent e) { btFinalizar.requestFocusInWindow(); }
+			@Override
+			public void focusLost(FocusEvent e) {}
+		});
 		
 		campoDinheiro.addFocusListener(new EscutadorFoco(campoDinheiro));
 		campoDinheiro.addFocusListener(new FocusListener() {
@@ -218,6 +226,7 @@ public class JanelaPagamento extends JDialog{
 					var dinheiroRecebido = CaixaController.converterTextoEmMonetario(campoDinheiro.getText());
 					var troco = dinheiroRecebido.subtract(valorFinal);
 					campoTroco.setText(CaixaController.converterMonetarioEmTexto(troco));
+					btFinalizar.requestFocusInWindow();
 				}
 			}
 		});
