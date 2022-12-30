@@ -62,13 +62,13 @@ public class JanelaPagamento extends JDialog{
 		//desconto (opcional)seria igual ao valor dos produtos.
 		valorFinal = valorProdutos;
 		
-		this.setSize(new Dimension(950,690));
+		this.setSize(new Dimension(1100,730));
 		this.setTitle("Janela pagamento");
 		this.setLayout(new BorderLayout());
 		this.setLocationRelativeTo(pai);
 		this.setModalityType(ModalityType.APPLICATION_MODAL);
 		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-			
+		
 		adicionarComponentes(pai);
 		//this.pack();
 	}
@@ -272,21 +272,42 @@ public class JanelaPagamento extends JDialog{
 		
 		var pCentral = new JPanel(new WrapLayout(FlowLayout.LEFT));
 		
-		switch(tipoCartao) {
-			case CARTAO_VALE:
-				frame.setTitle("Pagamento com cartão vale-alimentação");
-				break;
-			case CARTAO_DEBITO:
-				frame.setTitle("Pagamento com cartão de débito");
-				break;
-			case CARTAO_CREDITO:
-				frame.setTitle("Pagamento com cartão de crédito");
-				break;
-			default:
-				throw new IllegalComponentStateException();
+		var lbTaxa = new JLabel("Taxa do cartão:");
+		var campoTaxa = new JTextField();
+		campoTaxa.setEditable(false);
+		
+		if(tipoCartao == FormaPagamento.CARTAO_DEBITO) {
+			frame.setTitle("Pagamento com cartão de crédito");
+		} else if(tipoCartao == FormaPagamento.CARTAO_DEBITO) {
+			frame.setTitle("Pagamento com cartão de débito");
+		} else {
+			frame.setTitle("Pagamento com cartão vale-alimentação");
 		}
 		
-		frame.add(new JLabel("CREDITO"), BorderLayout.CENTER);
+		var boxTaxa = new JCheckBox("Aplicar taxa");
+		boxTaxa.addItemListener(quandoClicado -> {
+			if(boxTaxa.isSelected()) {
+				campoTaxa.setEnabled(true);
+				var valorComTaxa = CaixaController.aplicarTaxaCartao(valorProdutos, tipoCartao);
+				valorFinal = valorComTaxa;
+				campoValorTotal.setText(CaixaController.converterMonetarioEmTexto(valorFinal));
+				campoTaxa.setText(CaixaController.converterMonetarioEmTexto(valorComTaxa));
+			} else {
+				campoTaxa.setText("");
+				campoTaxa.setEnabled(false);
+				valorFinal = valorProdutos;
+				campoValorTotal.setText(CaixaController.converterMonetarioEmTexto(valorProdutos));
+			}
+		});
+		boxTaxa.setSelected(true);
+		
+		pCentral.add(lbTaxa);
+		pCentral.add(campoTaxa);
+		pCentral.add(boxTaxa);
+		
+
+		
+		frame.add(pCentral, BorderLayout.CENTER);
 		return frame;
 	}
 	
