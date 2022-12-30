@@ -22,11 +22,11 @@ public class CaixaController {
 	
 	public static BigDecimal aplicarTaxaCartao(BigDecimal valorProdutos, FormaPagamento tipoCartao) {
 		
-		var taxaEmDecimal = BigDecimal.valueOf(tipoCartao.taxaPorcentagem()).setScale(2, RoundingMode.HALF_EVEN);
+		var taxaEmDecimal = BigDecimal.valueOf(tipoCartao.taxaPorcentagem()).setScale(3, RoundingMode.HALF_EVEN);
 		System.out.println(taxaEmDecimal);
-		var totalComTaxa = valorProdutos.multiply(taxaEmDecimal).setScale(2, RoundingMode.HALF_EVEN);
+		var totalComTaxa = valorProdutos.multiply(taxaEmDecimal).setScale(3, RoundingMode.HALF_EVEN);
 		System.out.println(totalComTaxa);
 		
-		return totalComTaxa;
+		return totalComTaxa.setScale(2, RoundingMode.HALF_EVEN);
 	}
 }
