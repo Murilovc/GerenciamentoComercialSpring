@@ -149,8 +149,8 @@ public class GerenciamentoComercialSpringApplication {
 				e1.getCause().getMessage();
 			}
 			var icone = new ImageIcon(imagemBytes);
-			var imagemOriginal = icone.getImage();
-			icone.setImage(imagemOriginal.getScaledInstance(largura, altura, Image.SCALE_SMOOTH));
+			var imagemRedimensionada = icone.getImage().getScaledInstance(largura, altura, Image.SCALE_SMOOTH);
+			icone.setImage(imagemRedimensionada);
 			return icone;
 		}
 		
