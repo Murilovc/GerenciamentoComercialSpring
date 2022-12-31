@@ -1,5 +1,6 @@
 package com.mvc.comercialplus.controller;
 
+import java.awt.Desktop;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -28,5 +29,40 @@ public class CaixaController {
 		System.out.println(totalComTaxa);
 		
 		return totalComTaxa.setScale(2, RoundingMode.HALF_EVEN);
+	}
+	
+	public static BigDecimal aplicarTaxaParcelamentoCartao(BigDecimal valorProdutos, double taxaParcelamento) {
+		var taxaEmDecimal = BigDecimal.valueOf(taxaParcelamento).setScale(4,RoundingMode.HALF_EVEN);
+		System.out.println("Taxa parcelamento"+taxaEmDecimal);
+		var totalComTaxaParcelamento = valorProdutos.multiply(taxaEmDecimal).setScale(4,RoundingMode.HALF_EVEN);
+		System.out.println("Total com parcelamento"+totalComTaxaParcelamento);
+		
+		return totalComTaxaParcelamento.setScale(2, RoundingMode.HALF_EVEN);
+	}
+	
+	public static void imprimir() {
+		var modeloPraImprimir = 
+		"""
+				COMERCIAL LOPES
+				R STA MARIA, 504
+				JOÃO EDUARDO I, RB/AC
+			=========================================
+						CUPOM NÃO FISCAL
+			-----------------------------------------
+			COD		DESCRIÇÃO			QTD.	VALOR
+			1		VENENO PRETO		3		12,70
+			2		COTONETE			2		 7,89
+			6		TALCO				4		14,00
+			
+			-----------------------------------------
+			TOTAL PRODUTOS				R$ 34,59     
+			TAXAS PAGAMENTO				R$  4,59     
+			DESCONTO                    R$  0,00     
+			TOTAL						R$ 39,18     
+			-----------------------------------------
+			
+					OBRIGADO E VOLTE SEMPRE!         
+				""";
+		
 	}
 }
