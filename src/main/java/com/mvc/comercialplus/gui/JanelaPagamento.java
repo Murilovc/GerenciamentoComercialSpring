@@ -18,6 +18,7 @@ import java.util.Locale;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JDesktopPane;
 import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
@@ -43,8 +44,10 @@ public class JanelaPagamento extends JDialog{
 	private JTextField campoValorTotal;
 	private JFormattedTextField campoDesconto;
 	
-	private BigDecimal valorProdutos;
+	private final BigDecimal valorProdutos;
 	private BigDecimal valorFinal;
+	private BigDecimal valorTaxaCartao;
+	private BigDecimal valorTaxaParcelamento;
 	
 	private JInternalFrame internalFrame;
 	
@@ -54,13 +57,9 @@ public class JanelaPagamento extends JDialog{
 	
 	public JanelaPagamento(MenuPrincipal pai, BigDecimal valorProdutos) {
 		
-		//pai.setVisible(false);
-		
 		this.valorProdutos = valorProdutos;
-		//inicialmente se presume que a venda sera em dinheiro
-		//logo nao havera taxas e o valor final antes de qualquer
-		//desconto (opcional)seria igual ao valor dos produtos.
-		valorFinal = valorProdutos;
+		
+		setarValoresPagamento();
 		
 		this.setSize(new Dimension(1100,730));
 		this.setTitle("Janela pagamento");
@@ -73,6 +72,15 @@ public class JanelaPagamento extends JDialog{
 		//this.pack();
 	}
 	
+	private void setarValoresPagamento() {
+		//inicialmente se presume que a venda sera em dinheiro
+		//logo nao havera taxas e o valor final antes de qualquer
+		//desconto (opcional)seria igual ao valor dos produtos.
+		valorFinal = valorProdutos;
+		valorTaxaCartao = BigDecimal.ZERO.setScale(2);
+		valorTaxaParcelamento = BigDecimal.ZERO.setScale(2);
+	}
+	
 	
 	private void adicionarComponentes(MenuPrincipal pai) {
 		/*PARTE SUPERIOR DA JANELA*/
@@ -83,6 +91,7 @@ public class JanelaPagamento extends JDialog{
 				internalFrame.dispose();
 				desktopPane.repaint();
 			}
+			setarValoresPagamento();
 			internalFrame = criarFrameInternoDinheiro();
 			desktopPane.add(internalFrame);
 			internalFrame.setVisible(true);
@@ -97,6 +106,7 @@ public class JanelaPagamento extends JDialog{
 				internalFrame.dispose();
 				desktopPane.repaint();
 			}
+			setarValoresPagamento();
 			internalFrame = criarFrameInternoCartao(FormaPagamento.CARTAO_VALE);
 			desktopPane.add(internalFrame);
 			internalFrame.setVisible(true);	
@@ -108,6 +118,7 @@ public class JanelaPagamento extends JDialog{
 				internalFrame.dispose();
 				desktopPane.repaint();
 			}
+			setarValoresPagamento();
 			internalFrame = criarFrameInternoCartao(FormaPagamento.CARTAO_DEBITO);
 			desktopPane.add(internalFrame);
 			internalFrame.setVisible(true);	
@@ -119,6 +130,7 @@ public class JanelaPagamento extends JDialog{
 				internalFrame.dispose();
 				desktopPane.repaint();
 			}
+			setarValoresPagamento();
 			internalFrame = criarFrameInternoCartao(FormaPagamento.CARTAO_CREDITO);
 			desktopPane.add(internalFrame);
 			internalFrame.setVisible(true);	
@@ -270,44 +282,171 @@ public class JanelaPagamento extends JDialog{
 	private JInternalFrame criarFrameInternoCartao(FormaPagamento tipoCartao) {
 		var frame = criarFrameInternoBasico();
 		
-		var pCentral = new JPanel(new WrapLayout(FlowLayout.LEFT));
+		var pEsquerdo = new JPanel(new WrapLayout(FlowLayout.LEFT));
+		pEsquerdo.setSize(new Dimension(200,550));
 		
 		var lbTaxa = new JLabel("Taxa do cartão:");
+		lbTaxa.setFont(lbTaxa.getFont().deriveFont(23f).deriveFont(Font.BOLD));
 		var campoTaxa = new JTextField();
 		campoTaxa.setEditable(false);
-		
-		if(tipoCartao == FormaPagamento.CARTAO_DEBITO) {
-			frame.setTitle("Pagamento com cartão de crédito");
-		} else if(tipoCartao == FormaPagamento.CARTAO_DEBITO) {
-			frame.setTitle("Pagamento com cartão de débito");
-		} else {
-			frame.setTitle("Pagamento com cartão vale-alimentação");
-		}
+		campoTaxa.setColumns(12);
+		campoTaxa.setFont(campoTaxa.getFont().deriveFont(28f));
 		
 		var boxTaxa = new JCheckBox("Aplicar taxa");
 		boxTaxa.addItemListener(quandoClicado -> {
 			if(boxTaxa.isSelected()) {
 				campoTaxa.setEnabled(true);
 				var valorComTaxa = CaixaController.aplicarTaxaCartao(valorProdutos, tipoCartao);
-				valorFinal = valorComTaxa;
+				valorTaxaCartao = valorComTaxa.subtract(valorProdutos);
+				valorFinal = valorProdutos.add(valorTaxaParcelamento.add(valorTaxaCartao));
+				
 				campoValorTotal.setText(CaixaController.converterMonetarioEmTexto(valorFinal));
-				campoTaxa.setText(CaixaController.converterMonetarioEmTexto(valorComTaxa));
+				campoTaxa.setText(CaixaController.converterMonetarioEmTexto(valorTaxaCartao));
 			} else {
-				campoTaxa.setText("");
+				valorTaxaCartao = BigDecimal.ZERO.setScale(2);
+				valorFinal = valorProdutos.add(valorTaxaParcelamento.add(valorTaxaCartao));
+				
+				campoTaxa.setText("Taxa não aplicada");
 				campoTaxa.setEnabled(false);
-				valorFinal = valorProdutos;
-				campoValorTotal.setText(CaixaController.converterMonetarioEmTexto(valorProdutos));
+				campoValorTotal.setText(CaixaController.converterMonetarioEmTexto(valorFinal));
 			}
 		});
+		
+		if(tipoCartao == FormaPagamento.CARTAO_DEBITO) {
+			frame.setTitle("Pagamento com cartão de débito");
+		} else if(tipoCartao == FormaPagamento.CARTAO_CREDITO) {
+			frame.setTitle("Pagamento com cartão de crédito");
+			var pDireito = new JPanel(new WrapLayout(FlowLayout.LEFT));
+			var boxParcelamento = new JCheckBox("Parcelar?");
+
+			var lbParcelas = new JLabel("Parcelamento em:");
+			lbParcelas.setFont(lbParcelas.getFont().deriveFont(23f).deriveFont(Font.BOLD));
+			lbParcelas.setVisible(false);
+			var comboParcelas = new JComboBox<String>(
+					new String[]{"1x","2x","3x","4x","5x","6x","7x","8x","9x","10x","11x","12x"});
+			comboParcelas.setEnabled(false);
+			comboParcelas.setVisible(false);
+			
+			var campoValorTaxaParcelamento = new JTextField();
+			campoValorTaxaParcelamento.setEditable(false);
+			campoValorTaxaParcelamento.setColumns(10);
+			campoValorTaxaParcelamento.setFont(campoValorTaxaParcelamento.getFont().deriveFont(25f));
+			campoValorTaxaParcelamento.setVisible(false);
+			
+			var boxAplicarTaxa = new JCheckBox("Aplicar taxa");
+			boxAplicarTaxa.setVisible(false);
+			boxAplicarTaxa.addItemListener(quandoClicado -> {
+				if(boxAplicarTaxa.isSelected()) {
+					campoValorTaxaParcelamento.setText("Selecione o Nº de parcelas");
+				} else {
+					comboParcelas.setSelectedIndex(0);
+					valorTaxaParcelamento = BigDecimal.ZERO.setScale(2);
+					valorFinal = valorProdutos.add(valorTaxaParcelamento.add(valorTaxaCartao));
+					campoValorTotal.setText(CaixaController.converterMonetarioEmTexto(valorFinal));
+				}
+			});
+			boxAplicarTaxa.setSelected(true);
+			
+			
+			boxParcelamento.addItemListener(eventoSelecao -> {
+				if(boxParcelamento.isSelected()) {
+					lbParcelas.setVisible(true);
+					comboParcelas.setVisible(true);
+					comboParcelas.setEnabled(true);
+					campoValorTaxaParcelamento.setVisible(true);
+					boxAplicarTaxa.setVisible(true);
+				} else {
+					lbParcelas.setVisible(false);
+					comboParcelas.setSelectedIndex(0);
+					comboParcelas.setVisible(false);
+					comboParcelas.setEnabled(false);
+					campoValorTaxaParcelamento.setVisible(false);
+					boxAplicarTaxa.setVisible(false);
+					valorTaxaParcelamento = BigDecimal.ZERO.setScale(2);
+					valorFinal = valorProdutos.add(valorTaxaParcelamento.add(valorTaxaCartao));
+					campoValorTotal.setText(CaixaController.converterMonetarioEmTexto(valorFinal));
+				}
+			});
+			comboParcelas.addActionListener(eventoSelecao -> {
+				
+				BigDecimal valorComParcelamento;
+				
+				switch((String)comboParcelas.getSelectedItem()) {
+					case "1x":
+						valorComParcelamento = valorProdutos;
+						break;
+					case "2x":
+						valorComParcelamento = CaixaController
+							.aplicarTaxaParcelamentoCartao(valorProdutos, 1.0459);
+						break;
+					case "3x":
+						valorComParcelamento = CaixaController
+							.aplicarTaxaParcelamentoCartao(valorProdutos, 1.0597);
+						break;
+					case "4x":
+						valorComParcelamento = CaixaController
+							.aplicarTaxaParcelamentoCartao(valorProdutos, 1.0733);
+						break;
+					case "5x":
+						valorComParcelamento = CaixaController
+							.aplicarTaxaParcelamentoCartao(valorProdutos, 1.0866);
+						break;
+					case "6x":
+						valorComParcelamento = CaixaController
+							.aplicarTaxaParcelamentoCartao(valorProdutos, 1.0996);
+						break;
+					case "7x":
+						valorComParcelamento = CaixaController
+							.aplicarTaxaParcelamentoCartao(valorProdutos, 1.1124);
+						break;
+					case "8x":
+						valorComParcelamento = CaixaController
+							.aplicarTaxaParcelamentoCartao(valorProdutos, 1.1250);
+						break;
+					case "9x":
+						valorComParcelamento = CaixaController
+							.aplicarTaxaParcelamentoCartao(valorProdutos, 1.1373);
+						break;
+					case "10x":
+						valorComParcelamento = CaixaController
+							.aplicarTaxaParcelamentoCartao(valorProdutos, 1.1493);
+						break;
+					case "11x":
+						valorComParcelamento = CaixaController
+							.aplicarTaxaParcelamentoCartao(valorProdutos, 1.1612);
+						break;
+					case "12x":
+						valorComParcelamento = CaixaController
+							.aplicarTaxaParcelamentoCartao(valorProdutos, 1.1728);
+						break;
+					default:
+						valorComParcelamento = valorProdutos;
+				}
+				
+				if(boxAplicarTaxa.isSelected()) {
+					valorTaxaParcelamento = valorComParcelamento.subtract(valorProdutos);
+					
+					valorFinal = valorProdutos.add(valorTaxaParcelamento.add(valorTaxaCartao));
+					campoValorTotal.setText(CaixaController.converterMonetarioEmTexto(valorFinal));
+				}
+			});
+			pDireito.add(boxParcelamento);
+			pDireito.add(lbParcelas);
+			pDireito.add(comboParcelas);
+			pDireito.add(campoValorTaxaParcelamento);
+			pDireito.add(boxAplicarTaxa);
+			frame.add(pDireito, BorderLayout.EAST);
+		} else {
+			frame.setTitle("Pagamento com cartão vale-alimentação");
+		}
+		
 		boxTaxa.setSelected(true);
 		
-		pCentral.add(lbTaxa);
-		pCentral.add(campoTaxa);
-		pCentral.add(boxTaxa);
+		pEsquerdo.add(lbTaxa);
+		pEsquerdo.add(campoTaxa);
+		pEsquerdo.add(boxTaxa);
 		
-
-		
-		frame.add(pCentral, BorderLayout.CENTER);
+		frame.add(pEsquerdo, BorderLayout.WEST);
 		return frame;
 	}
 	
@@ -330,9 +469,6 @@ public class JanelaPagamento extends JDialog{
 		JPanel pCampoVenda = new JPanel(new WrapLayout(FlowLayout.LEFT));
 		pCampoVenda.add(campoValorVenda);
 		
-		var lbDesconto = new JLabel("Desconto?");
-		lbDesconto.setFont(lbDesconto.getFont().deriveFont(23f).deriveFont(Font.BOLD));
-		
 		campoDesconto = new JFormattedTextField();
 		campoDesconto.setFont(campoDesconto.getFont().deriveFont(28f));
 		campoDesconto.setPreferredSize(new Dimension(150,45));
@@ -346,7 +482,8 @@ public class JanelaPagamento extends JDialog{
 		btAplicarDesconto.addActionListener( quandoClicado -> {
 			var textoDesconto = campoDesconto.getText();
 			BigDecimal desconto = CaixaController.converterTextoEmMonetario(textoDesconto);
-			valorFinal = valorProdutos.subtract(desconto);
+			var subtotal = valorProdutos.add(valorTaxaParcelamento.add(valorTaxaCartao));
+			valorFinal = subtotal.subtract(desconto);
 			
 			campoValorTotal.setText(CaixaController.converterMonetarioEmTexto(valorFinal));
 		});
@@ -354,7 +491,7 @@ public class JanelaPagamento extends JDialog{
 		btAplicarDesconto.setEnabled(false);
 		btAplicarDesconto.setVisible(false);
 		
-        JCheckBox boxDesconto = new JCheckBox("Sim");
+        JCheckBox boxDesconto = new JCheckBox("Desconto?");
         boxDesconto.addActionListener(clicado -> {
         	if(boxDesconto.isSelected()) {
         		campoDesconto.setEnabled(true);
@@ -372,7 +509,6 @@ public class JanelaPagamento extends JDialog{
         });
 		
 		JPanel pInfoDesconto = new JPanel(new WrapLayout(FlowLayout.LEFT));
-		pInfoDesconto.add(lbDesconto);
 		pInfoDesconto.add(boxDesconto);
 		
 		JPanel pAdicionarDesconto = new JPanel(new WrapLayout(FlowLayout.LEFT));
