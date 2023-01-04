@@ -24,18 +24,14 @@ public class CaixaController {
 	public static BigDecimal aplicarTaxaCartao(BigDecimal valorProdutos, FormaPagamento tipoCartao) {
 		
 		var taxaEmDecimal = BigDecimal.valueOf(tipoCartao.taxaPorcentagem()).setScale(3, RoundingMode.HALF_EVEN);
-		System.out.println(taxaEmDecimal);
 		var totalComTaxa = valorProdutos.multiply(taxaEmDecimal).setScale(3, RoundingMode.HALF_EVEN);
-		System.out.println(totalComTaxa);
 		
 		return totalComTaxa.setScale(2, RoundingMode.HALF_EVEN);
 	}
 	
 	public static BigDecimal aplicarTaxaParcelamentoCartao(BigDecimal valorProdutos, double taxaParcelamento) {
 		var taxaEmDecimal = BigDecimal.valueOf(taxaParcelamento).setScale(4,RoundingMode.HALF_EVEN);
-		System.out.println("Taxa parcelamento"+taxaEmDecimal);
 		var totalComTaxaParcelamento = valorProdutos.multiply(taxaEmDecimal).setScale(4,RoundingMode.HALF_EVEN);
-		System.out.println("Total com parcelamento"+totalComTaxaParcelamento);
 		
 		return totalComTaxaParcelamento.setScale(2, RoundingMode.HALF_EVEN);
 	}
