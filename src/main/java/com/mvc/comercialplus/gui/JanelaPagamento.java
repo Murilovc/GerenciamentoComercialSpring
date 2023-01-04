@@ -6,16 +6,21 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.IllegalComponentStateException;
+import java.awt.Image;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.Currency;
 import java.util.Locale;
 
 import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -98,6 +103,17 @@ public class JanelaPagamento extends JDialog{
 			
 		});
 		var radioPix = new JRadioButton("PIX");
+		radioPix.addActionListener(eventoClique -> {
+			if(internalFrame != null) {
+				desktopPane.remove(internalFrame);
+				internalFrame.dispose();
+				desktopPane.repaint();
+			}
+			setarValoresPagamento();
+			internalFrame = criarFrameInternoPix();
+			desktopPane.add(internalFrame);
+			internalFrame.setVisible(true);	
+		});
 		var radioQRPix = new JRadioButton("QR CODE PIX");
 		var radioVale = new JRadioButton("CARTÃO VALE ALIMENTAÇÃO");
 		radioVale.addItemListener(eventoMarcado -> {
@@ -211,6 +227,52 @@ public class JanelaPagamento extends JDialog{
 		this.add(pSuperior, BorderLayout.NORTH);
 		this.add(desktopPane, BorderLayout.CENTER);
 		this.add(pInferior, BorderLayout.SOUTH);
+	}
+
+	private ImageIcon carregarImagemQRPix(int altura, int largura) {
+		byte[] imagemBytes = null;
+		
+		try {
+			imagemBytes = Files.readAllBytes(Paths.get("./qrcode.jpeg"));
+		} catch (IOException e1) {
+			e1.getCause().getMessage();
+		}
+		var icone = new ImageIcon(imagemBytes);
+		var imagemRedimensionada = icone.getImage().getScaledInstance(largura, altura, Image.SCALE_SMOOTH);
+		icone.setImage(imagemRedimensionada);
+		return icone;
+	}
+	
+	private String carregarTextoChavePix() {
+		byte[] textoBytes = null;
+		
+		try {
+			textoBytes = Files.readAllBytes(Paths.get("./chavepix.txt"));
+		} catch (IOException eio) {
+			eio.getCause().getMessage();
+		}
+		
+		return new String(textoBytes);
+	}
+	
+	private JInternalFrame criarFrameInternoPix() {
+		var frame = criarFrameInternoBasico();
+		frame.setTitle("Pagamento por transferência PIX");
+		frame.setSize(new Dimension(900, 535));
+		
+		var lbQrCode = new JLabel();
+		var icone = carregarImagemQRPix(320, 320);
+		lbQrCode.setIcon(icone);
+		
+		var lbChavePix = new JLabel();
+		var chavePix = carregarTextoChavePix();
+		lbChavePix.setText(chavePix);
+		lbChavePix.setFont(lbChavePix.getFont().deriveFont(45f).deriveFont(Font.BOLD));
+		
+		frame.add(lbQrCode, BorderLayout.WEST);
+		frame.add(lbChavePix, BorderLayout.EAST);
+		
+		return frame;
 	}
 	
 	private JInternalFrame criarFrameInternoDinheiro() {
@@ -550,9 +612,7 @@ public class JanelaPagamento extends JDialog{
             formatador.setFormat(formatoNumero);
             formatador.setAllowsInvalid(false);
             formatador.setCommitsOnValidEdit(true);
-            //XXX
-            System.out.println(formatador.getOverwriteMode());
-            //formatador.setOverwriteMode(true);
+            //System.out.println(formatador.getOverwriteMode());
             
             return formatador;
         }
