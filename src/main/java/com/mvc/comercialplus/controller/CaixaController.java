@@ -1,13 +1,51 @@
 package com.mvc.comercialplus.controller;
 
-import java.awt.Desktop;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-import com.mvc.comercialplus.config.Configuracao;
-import com.mvc.comercialplus.model.FormaPagamento;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 
+import com.mvc.comercialplus.config.Configuracao;
+import com.mvc.comercialplus.model.Cliente;
+import com.mvc.comercialplus.model.FormaPagamento;
+import com.mvc.comercialplus.service.ClienteService;
+import com.mvc.comercialplus.service.VendaService;
+
+@Controller
 public class CaixaController {
+	
+	ClienteService clienteService; 
+	VendaService vendaService;
+	
+	@Autowired
+	public CaixaController(ClienteService clienteService, VendaService vendaService) {
+		this.clienteService = clienteService;
+		this.vendaService = vendaService;
+	}
+	
+	public Cliente salvarCliente(String nome, String email, String endereco, String telefone, String cpf) {
+		Cliente cliente = new Cliente();
+		
+		if(cpf.equals("___.___.___-__")) {
+			cpf = null;
+		}
+		
+		if(telefone.equals("(__)_ ________")) {
+			telefone = null;
+		}
+		
+		cliente.setNome(nome);
+		cliente.setEmail(email);
+		cliente.setEndereco(endereco);
+		cliente.setTelefone(telefone);
+		cliente.setCpf(cpf);
+		
+		var clienteSalvo = clienteService.save(cliente);
+		
+		return clienteSalvo;
+	}
+	
 	public static BigDecimal converterTextoEmMonetario(String textoCampo) {
 		var semPrefixo = textoCampo.replace(Configuracao.PREFIXO_MONETARIO.get(), "");		
 		var comPonto  = semPrefixo.replace(',', '.');
