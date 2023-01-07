@@ -48,33 +48,40 @@ import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.mvc.comercialplus.config.Configuracao;
 import com.mvc.comercialplus.controller.CaixaController;
+import com.mvc.comercialplus.controller.ProdutoController;
 import com.mvc.comercialplus.gui.JanelaPagamento;
 import com.mvc.comercialplus.gui.Visualizacao;
 import com.mvc.comercialplus.gui.WrapLayout;
 import com.mvc.comercialplus.model.Categoria;
 import com.mvc.comercialplus.model.Produto;
+import com.mvc.comercialplus.service.ClienteService;
+import com.mvc.comercialplus.service.EstoqueService;
 import com.mvc.comercialplus.service.ProdutoService;
+import com.mvc.comercialplus.service.UnidadeService;
+import com.mvc.comercialplus.service.VendaService;
 
 @SpringBootApplication
 public class GerenciamentoComercialSpringApplication {
-
-	private ProdutoService produtoService;
 	
 	@Autowired
-	public GerenciamentoComercialSpringApplication(ProdutoService repo) {
-		this.produtoService = repo;
+	public GerenciamentoComercialSpringApplication(CaixaController caixaController, ProdutoController produtoController) {
+		
+
 		
 		//FlatDarculaLaf.setup();
 		FlatIntelliJLaf.setup();
 		
 		SwingUtilities.invokeLater(new Runnable() { 
 			public void run() { 
-				MenuPrincipal menu = new MenuPrincipal(repo);
+				MenuPrincipal menu = new MenuPrincipal(produtoController, caixaController);
 			} 
 		});
 	}
 	
 	public static class MenuPrincipal extends JFrame{
+		
+		private ProdutoController produtoController;
+		private CaixaController caixaController;
 		
 		private JButton btPagamento;
 		private JButton botaoRemover;
@@ -108,9 +115,12 @@ public class GerenciamentoComercialSpringApplication {
 		private static short temaEscolhido = TEMA_CLARO;
 		
 		
-		public MenuPrincipal(ProdutoService repo) {
+		public MenuPrincipal(ProdutoController produtoController, CaixaController caixaController) {
 			
-			this.service = repo;
+			this.produtoController = produtoController;
+			this.caixaController = caixaController;
+			
+			//this.service = repo;
 			/* Como este é o primeiro menu, precisa
 			 * explicitamente ser tornado visível
 			 * 
@@ -279,12 +289,12 @@ public class GerenciamentoComercialSpringApplication {
 			
 			
 			/*CENTRO DA JANELA*/
-			List<Produto> clientes = new ArrayList<>();
+			List<Produto> produtos = new ArrayList<>();
 			Class<?>[] classes = {Long.class, String.class, String.class,
 					String.class, BigDecimal.class, BigDecimal.class};
 			
 			visualizacao = new Visualizacao<Produto>(
-					clientes,
+					produtos,
 					new String[] {"ID","CATEGORIA","CÓDIGO DE BARRAS","NOME","PREÇO", "DESCONTO"},
 					classes,
 					6);
@@ -310,7 +320,7 @@ public class GerenciamentoComercialSpringApplication {
 			campoTotal.setFocusable(false);
 			campoTotal.setPreferredSize(new Dimension(180, 50));
 			
-			btPagamento = new JButton(new AcaoPagamento());
+			btPagamento = new JButton(new AcaoPagamento(caixaController));
 			btPagamento.setPreferredSize(new Dimension(120,50));
 			
 			JPanel pInferior = new JPanel(new WrapLayout());
@@ -465,8 +475,8 @@ public class GerenciamentoComercialSpringApplication {
 		private void tratarEntrada(char[] buffer) {
 			var codBarras = new String(buffer);
 			
-			if(service.validarEAN13(codBarras) == true) {
-				Optional<Produto> op = Optional.ofNullable(service.getByCodigoBarras(codBarras));
+			if(produtoController.validarEAN13(codBarras) == true) {
+				Optional<Produto> op = Optional.ofNullable(produtoController.getByCodigoBarras(codBarras));
 				
 				if(op.isPresent()) {
 										
@@ -557,10 +567,13 @@ public class GerenciamentoComercialSpringApplication {
 		
 		protected class AcaoPagamento extends AbstractAction {
 
-			public AcaoPagamento() {
+			CaixaController c;
+			
+			public AcaoPagamento(CaixaController c) {
 				super("PAGAMENTO");
 				putValue(MNEMONIC_KEY, KeyEvent.VK_T);
 				putValue(SHORT_DESCRIPTION, "Visualizar turma selecionada");
+				this.c = c;
 			}
 			
 			
@@ -572,7 +585,7 @@ public class GerenciamentoComercialSpringApplication {
 					JanelaPagamento jp;
 
 					jp = new JanelaPagamento(MenuPrincipal.this,
-							CaixaController.converterTextoEmMonetario(campoTotal.getText()));
+							CaixaController.converterTextoEmMonetario(campoTotal.getText()), c);
 					jp.setVisible(true);
 
 					
