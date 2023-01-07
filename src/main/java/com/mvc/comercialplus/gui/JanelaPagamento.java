@@ -5,7 +5,6 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.IllegalComponentStateException;
 import java.awt.Image;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -16,9 +15,15 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.util.Currency;
 import java.util.Locale;
+import java.util.Optional;
 
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -33,15 +38,22 @@ import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.SoftBevelBorder;
 import javax.swing.text.InternationalFormatter;
+import javax.swing.text.MaskFormatter;
+
+import org.apache.logging.log4j.message.MapMessage.MapFormat;
 
 import com.mvc.comercialplus.GerenciamentoComercialSpringApplication.MenuPrincipal;
 import com.mvc.comercialplus.config.Configuracao;
 import com.mvc.comercialplus.controller.CaixaController;
+import com.mvc.comercialplus.model.Cliente;
 import com.mvc.comercialplus.model.FormaPagamento;
+import com.mvc.comercialplus.service.ClienteService;
+import com.mvc.comercialplus.service.VendaService;
 
 @SuppressWarnings("serial")
 public class JanelaPagamento extends JDialog{
@@ -59,8 +71,17 @@ public class JanelaPagamento extends JDialog{
 	private JDesktopPane desktopPane;
 	
 	private JButton btFinalizar;
+	private JButton btSelCliente;
+	private JButton btCadCliente;
 	
-	public JanelaPagamento(MenuPrincipal pai, BigDecimal valorProdutos) {
+	private Cliente cliente;
+	
+	private CaixaController caixaController;
+	
+	public JanelaPagamento(MenuPrincipal pai, BigDecimal valorProdutos, 
+			CaixaController caixaController) {
+		
+		this.caixaController = caixaController;
 		
 		this.valorProdutos = valorProdutos;
 		
@@ -74,6 +95,7 @@ public class JanelaPagamento extends JDialog{
 		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		
 		adicionarComponentes(pai);
+		cliente = null;
 		//this.pack();
 	}
 	
@@ -115,6 +137,17 @@ public class JanelaPagamento extends JDialog{
 			internalFrame.setVisible(true);	
 		});
 		var radioQRPix = new JRadioButton("QR CODE PIX");
+		radioQRPix.addActionListener(eventoMarcacao -> {
+			if(internalFrame != null) {
+				desktopPane.remove(internalFrame);
+				internalFrame.dispose();
+				desktopPane.repaint();
+			}
+			setarValoresPagamento();
+			internalFrame = criarFrameInternoQRPix();
+			desktopPane.add(internalFrame);
+			internalFrame.setVisible(true);	
+		});
 		var radioVale = new JRadioButton("CARTÃO VALE ALIMENTAÇÃO");
 		radioVale.addItemListener(eventoMarcado -> {
 			if(internalFrame != null) {
@@ -152,6 +185,17 @@ public class JanelaPagamento extends JDialog{
 			internalFrame.setVisible(true);	
 		});
 		var radioPendura = new JRadioButton("FIADO");
+		radioPendura.addActionListener(eventoMarcacao -> {
+			if(internalFrame != null) {
+				desktopPane.remove(internalFrame);
+				internalFrame.dispose();
+				desktopPane.repaint();
+			}
+			setarValoresPagamento();
+			internalFrame = criarFrameInternoFiado(null);
+			desktopPane.add(internalFrame);
+			internalFrame.setVisible(true);
+		});
 		var btGrupo = new ButtonGroup();
 		//adicionando ao grupo para que apenas um fique selecionado
 		//por vez
@@ -255,6 +299,218 @@ public class JanelaPagamento extends JDialog{
 		return new String(textoBytes);
 	}
 	
+	private JInternalFrame criarFrameInternoFiado(Cliente talvezCliente) {
+		var frame = criarFrameInternoBasico();
+		frame.setTitle("Adicionar valor à conta do cliente - Fiado");
+		frame.setSize(640,530);
+		//deixar pra depois
+		var boxDinheiro = new JCheckBox("Pagar parte da compra no dinheiro?");
+		
+		var pCentral = new JPanel(new WrapLayout(FlowLayout.LEFT));
+		pCentral.setSize(new Dimension(300,600));
+
+		btSelCliente = new JButton("Selecionar");
+		btCadCliente = new JButton("Cadastrar");
+		
+		btSelCliente.addActionListener(eventoClique -> {
+			var frameSel = criarFrameInternoSelecionarCliente(frame.getWidth());
+			frameSel.setVisible(true);
+			btCadCliente.setEnabled(false);
+			btSelCliente.setEnabled(false);
+		});
+		btCadCliente.addActionListener(eventoClique -> {
+			var frameCad = criarFrameInternoCadastrarCliente(frame.getWidth());
+			frameCad.setVisible(true);
+			btCadCliente.setEnabled(false);
+			btSelCliente.setEnabled(false);
+		});
+		
+		if(Optional.ofNullable(talvezCliente).isPresent()) {
+			var pInfo = new JPanel(new WrapLayout(FlowLayout.LEFT));
+			pInfo.setBorder(new SoftBevelBorder(SoftBevelBorder.RAISED));
+			
+			var lbInfo = new JLabel("Informações do cliente:");
+			lbInfo.setFont(lbInfo.getFont().deriveFont(23f).deriveFont(Font.BOLD));
+			var lbNome = new JLabel(cliente.getNome());
+			lbNome.setFont(lbNome.getFont().deriveFont(23f));
+			var lbEmail = new JLabel(cliente.getEmail());
+			lbEmail.setFont(lbEmail.getFont().deriveFont(23f));
+			var lbEndereco = new JLabel(cliente.getEndereco());
+			lbEndereco.setFont(lbEndereco.getFont().deriveFont(23f));
+			var lbTelefone = new JLabel(cliente.getTelefone());
+			lbTelefone.setFont(lbEndereco.getFont().deriveFont(23f));
+			var lbCPF = new JLabel(cliente.getCpf());
+			lbCPF.setFont(lbEndereco.getFont().deriveFont(23f));
+			
+			pInfo.add(lbInfo);
+			pInfo.add(lbNome);
+			pInfo.add(lbEndereco);
+			pInfo.add(lbTelefone);
+			pInfo.add(lbCPF);
+			pInfo.add(lbEmail);
+			
+			var pBotoes = new JPanel(new GridLayout(3,1));
+			var lbInfoBt = new JLabel("Não é esse o cliente que procura?");
+			btSelCliente.setText("Selecionar outro");
+			btCadCliente.setText("Cadastrar novo");
+			//lbInfoBt.setFont(lbInfoBt.getFont().deriveFont(23f));
+			pBotoes.add(lbInfoBt);
+			pBotoes.add(btSelCliente);
+			pBotoes.add(btCadCliente);
+			
+			pCentral.add(pInfo);
+			pCentral.add(pBotoes);
+		} else {
+			var lbFiado = new JLabel("<html>Escolha o cliente que<br> está fazendo a compra:");
+			lbFiado.setFont(lbFiado.getFont().deriveFont(23f).deriveFont(Font.BOLD));
+			
+			var pBotoes = new JPanel(new GridLayout(4,1));
+			var lbCadastrado = new JLabel("Cliente já cadastrado?");
+			lbCadastrado.setFont(lbCadastrado.getFont().deriveFont(23f));
+			lbCadastrado.setLabelFor(btSelCliente);
+			var lbNovo = new JLabel("Cliente novo?");
+			lbNovo.setFont(lbNovo.getFont().deriveFont(23f));
+			lbNovo.setLabelFor(btCadCliente);
+
+			pBotoes.add(lbCadastrado);
+			pBotoes.add(btSelCliente);
+			pBotoes.add(lbNovo);
+			pBotoes.add(btCadCliente);
+			
+			pCentral.add(lbFiado);
+			pCentral.add(pBotoes);
+		}
+		
+		
+		frame.add(pCentral, BorderLayout.WEST);
+		
+		return frame;
+	}
+	
+	private JInternalFrame criarFrameInternoCadastrarCliente(int larguraFrameFiado) {
+		var frame = new JInternalFrame("Cadastro de novo cliente");
+		frame.setLayout(new BorderLayout());
+		frame.setSize(new Dimension(360,520));
+		frame.setResizable(true);
+		frame.setLocation(larguraFrameFiado+10, 0);
+		
+		desktopPane.add(frame);
+		
+		var btFechar = new JButton("Cadastrar");
+		
+		var lbNome = new JLabel("Nome (obrigatório):");
+		var campoNome = new JTextField();
+		lbNome.setLabelFor(campoNome);
+		
+		var lbEmail = new JLabel("Email:");
+		var campoEmail = new JTextField();
+		lbEmail.setLabelFor(campoEmail);
+		
+		var lbEndereco = new JLabel("Endereço:");
+		var campoEndereco = new JTextField();
+		lbEndereco.setLabelFor(campoEndereco);
+		
+		var lbTelefone = new JLabel("Telefone:");
+		var campoTelefone = new JFormattedTextField();
+		MaskFormatter mascaraTel;
+		try {
+			mascaraTel = new MaskFormatter("(##)# ########");
+			mascaraTel.setPlaceholder(" ");
+			mascaraTel.setPlaceholderCharacter('_');
+			mascaraTel.install(campoTelefone);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		lbTelefone.setLabelFor(campoTelefone);
+		
+		var lbCPF = new JLabel("CPF:");
+		var campoCPF = new JFormattedTextField();
+		MaskFormatter mascaraCPF;
+		try {
+			mascaraCPF = new MaskFormatter("###.###.###-##");
+			//mascaraCPF.setPlaceholder(" ");
+			mascaraCPF.setPlaceholderCharacter('_');
+			mascaraCPF.install(campoCPF);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		lbCPF.setLabelFor(campoCPF);
+		
+		btFechar.addActionListener(eventoClique -> {
+			
+			if(!campoNome.getText().equals("")) {
+				this.cliente = caixaController.salvarCliente(campoNome.getText(), campoEmail.getText(),
+						campoEndereco.getText(), campoTelefone.getText(), campoCPF.getText());
+				//pai.add(criarPainelInfoCliente(cliente));
+				
+				desktopPane.remove(internalFrame);
+				internalFrame.dispose();
+				desktopPane.repaint();
+				setarValoresPagamento();
+				internalFrame = criarFrameInternoFiado(cliente);
+				desktopPane.add(internalFrame);
+				internalFrame.setVisible(true);
+			}
+
+			btCadCliente.setEnabled(true);
+			btSelCliente.setEnabled(true);
+			
+			frame.dispose();
+		});
+		
+		var pForm = new JPanel(new GridLayout(10,1));
+		pForm.add(lbNome);
+		pForm.add(campoNome);
+		pForm.add(lbEmail);
+		pForm.add(campoEmail);
+		pForm.add(lbEndereco);
+		pForm.add(campoEndereco);
+		pForm.add(lbTelefone);
+		pForm.add(campoTelefone);
+		pForm.add(lbCPF);
+		pForm.add(campoCPF);
+		
+		frame.add(pForm, BorderLayout.NORTH);
+		frame.add(btFechar, BorderLayout.SOUTH);
+		return frame;
+	}
+	
+
+	
+	private JInternalFrame criarFrameInternoSelecionarCliente(int larguraFrameFiado) {
+		var frame = new JInternalFrame("Busca de cliente");
+		frame.setLayout(new BorderLayout());
+		frame.setSize(new Dimension(320,520));
+		frame.setResizable(true);
+		frame.setLocation(larguraFrameFiado+10, 0);
+		
+		desktopPane.add(frame);
+		
+		var btFechar = new JButton("Fechar");
+		
+		btFechar.addActionListener(eventoClique -> {
+			btCadCliente.setEnabled(true);
+			btSelCliente.setEnabled(true);
+			frame.dispose();
+		});
+		
+		frame.add(btFechar, BorderLayout.SOUTH);
+		return frame;
+	}
+	
+	private JInternalFrame criarFrameInternoQRPix() {
+		var frame = criarFrameInternoBasico();
+		frame.setTitle("Pagamento por código QR Pix");
+
+		var lbMensagem = new JLabel(
+				"<html>Após o pagamento do QRCode<br>na maquininha, clique em CONFIRMAR, abaixo.");
+		lbMensagem.setFont(lbMensagem.getFont().deriveFont(45f).deriveFont(Font.BOLD));
+		
+		frame.add(lbMensagem, BorderLayout.CENTER);
+		
+		return frame;
+	}
+	
 	private JInternalFrame criarFrameInternoPix() {
 		var frame = criarFrameInternoBasico();
 		frame.setTitle("Pagamento por transferência PIX");
@@ -270,7 +526,7 @@ public class JanelaPagamento extends JDialog{
 		lbChavePix.setFont(lbChavePix.getFont().deriveFont(45f).deriveFont(Font.BOLD));
 		
 		frame.add(lbQrCode, BorderLayout.WEST);
-		frame.add(lbChavePix, BorderLayout.EAST);
+		frame.add(lbChavePix, BorderLayout.CENTER);
 		
 		return frame;
 	}
